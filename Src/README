@@ -1,3 +1,5 @@
+@copyleft MC Marinica, R Alexander
+
 Makefile_gfortran - Makefile for gfortran. Tested for versions < 4.8.5
 Makefile_ifort    - Makefile for ifort.    Tested for versions < Composer 2016
 
