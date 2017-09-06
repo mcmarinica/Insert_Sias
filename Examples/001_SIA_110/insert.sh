@@ -23,3 +23,5 @@ EOF
 # then the position of the SIAs  is read from  no00.inp by put_vct.x
 ../../Src/bin/put_vct.x < put.inp
 
+
+echo 'Output is obvius ... the gin file is   formd_new_ndm_scl.str'
