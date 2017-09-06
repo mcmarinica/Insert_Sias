@@ -1,7 +1,9 @@
   subroutine read_tsia (tsia)
   integer :: tsia
 
-       write(*,*) 'Choice the sia (1 - 110)(2 - 111)(21 - 111 with care)(22 - 111 m)(221 - 111 m with care)(3 - 100) (31 - 100 with care) (4-gao)(5 -vac)(6-octa) (67 - octa, twisted):'
+       write(*,*) 'Choice the sia (1 - 110)(2 - 111)(21 - 111 with care)  &
+                  (22 - 111 m)(221 - 111 m with care)(3 - 100) (31 - 100 with care) &
+                  (4-gao)(5 -vac)(6-octa) (67 - octa, twisted):'
        read(*,*) tsia
        write(*,*) 'excelent choice master'
        

@@ -174,7 +174,7 @@
 	  rsz(2)= as100/2.d0
 	  else if (tsia==4) then
 	  
-	  open (23,name='gao_unit.in')
+	  open (23,file='gao_unit.in')
 	   
 	  do i=1,6 
 	   read(23,*) rgx(i),rgy(i),rgz(i)
@@ -628,6 +628,7 @@
        use pbc       
        integer  :: nall,ntemp,nsia,n,i,icard,nsize
        double precision     :: rx(nsize),ry(nsize),rz(nsize)
+       double precision     :: rsx(2),rsy(2),rsz(2)
        integer  :: n1(nsize),n2(nsize),n3(nsize),nsite(nsia)       
        double precision     :: x,y,z, volc        
        double precision,dimension(:,:) :: a(3,3)

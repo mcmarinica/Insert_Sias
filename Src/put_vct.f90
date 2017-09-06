@@ -188,7 +188,8 @@
       
         call  lattice_compute_different_removeatoms (nsia, nlac_remove,nsite_octa_vac_remove,indx,list_no_order,ndatoms)
         allocate (atoms_to_remove(ndatoms),atoms_to_remove_type(ndatoms))
-        call  lattice_compute_atoms_to_remove(atoms_to_remove,atoms_to_remove_type,ndatoms,nlac_remove,list_no_order,nsite_octa_vac_remove_type,indx)
+        call  lattice_compute_atoms_to_remove(atoms_to_remove,atoms_to_remove_type,ndatoms, & 
+              nlac_remove,list_no_order,nsite_octa_vac_remove_type,indx)
         call  offlattice_get_coordinates_and_order(a0,temprxgaos,temprygaos,temprzgaos,&
                                                     rx,    ry,    rz,    &
                      offlattice_no_order,indx,nsite,type_octa,nsia,nsize,gndatoms,natoms_extra)
@@ -246,18 +247,20 @@
              end if 
 
               
-            call solid_and_defect_cut (a0, surface, new_solid, gndatoms, nsize, rx,ry,rz, isite_surface, is_tot,izcoordinate, plane_corner)  
-            call solid_and_defect_cut (a0, surface, ntemp, gndatoms, nsize, rxb,ryb,rzb, isite_surfaceb, is_totb,izcoordinate, plane_corner)  
-             open (unit=44, name='k_bulk.gin',status='unknown')
-             open (unit=45, name='k_dfct.gin',status='unknown')
-             open (unit=46, name='k_dfct_vide.gin',status='unknown')
+            call solid_and_defect_cut (a0, surface, new_solid, gndatoms, nsize, rx,ry,rz, isite_surface, &
+                                       is_tot,izcoordinate, plane_corner)  
+            call solid_and_defect_cut (a0, surface, ntemp, gndatoms, nsize, rxb,ryb,rzb, isite_surfaceb, &
+                                       is_totb,izcoordinate, plane_corner)  
+             open (unit=44, file='k_bulk.gin',status='unknown')
+             open (unit=45, file='k_dfct.gin',status='unknown')
+             open (unit=46, file='k_dfct_vide.gin',status='unknown')
              write(46,*) '1 1 1'
              write(45,*) '1 1 1'
              write(44,*) '1 1 1'
              
-             shift(:)=(/ 1.d0,1.d0,0 /)
+             shift(:)=(/ 1.d0,1.d0,0.d0 /)
              abase(:,1) = (a0/2.d0)*(plane_corner(:,2)-plane_corner(:,1) + shift(:))
-             shift(:) = (/ -1.d0,1.d0,0 /)
+             shift(:) = (/ -1.d0,1.d0,0.d0 /)
              abase(:,2) = (a0/2.d0)*(plane_corner(:,4)-plane_corner(:,1) + shift(:))
              abase(:,3) =  (a0/2.d0)*(/ 0.d0, 0.d0, dble(izcoordinate)+1.d0 /)
 

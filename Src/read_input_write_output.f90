@@ -296,7 +296,7 @@ end if
     rsz(2)= as100/2.d0
     else if (tsia==4) then
     
-    open (23,name='gao_unit.in')
+    open (23,file='gao_unit.in',form='formatted' )
      
     do i=1,6 
      read(23,*) rgx(i),rgy(i),rgz(i)

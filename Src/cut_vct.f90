@@ -260,7 +260,7 @@
 	integer, intent(in) :: n1(ntemp),n2(ntemp),n3(ntemp),nloop(ntemp),nocto(ntemp)
 	integer   :: i
 	
-	open (unit=11, name='no00.inp_new', status='unknown')
+	open (unit=11, file='no00.inp_new', status='unknown')
 	write(11,'(i7)') nz16
 	
 	do i=1,ntemp
@@ -300,7 +300,7 @@
         ZMIN= 1d30 
 
 
-	open (unit=11, name='center.xyz', status='unknown')
+	open (unit=11, file='center.xyz', status='unknown')
 	write(11,'(i7)') nz16
         write(11,'(a)') ' '
 
