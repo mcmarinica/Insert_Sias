@@ -1,0 +1,4 @@
+This is an examples how to insert one  110 SIA  into one bcc structure. 
+
+1. Edit the no00.inp to handle the position on 110 SIAs
+2. Run the script insert.sh (and read the content is you want to change more things). 
