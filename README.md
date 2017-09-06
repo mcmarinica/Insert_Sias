@@ -1,2 +1,2 @@
 # Insert_Sias
-This is the README
+This package was originally written by MC Marinica and Rebecca Alexander. 
