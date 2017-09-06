@@ -1,10 +1,10 @@
 BIN = bin
 MODULES = ./Modules
-F90 = gfortran
-F77 = gfortran
+F90 = ifort
+F77 = ifort
 #F90FLAGS = -O0 -fpe0 -CB -check all -traceback -warn all -module $(MODULES) -I $(MODULES)
-F90FLAGS = -O3 -ffree-form  -J $(MODULES) -I $(MODULES)
-#LIBLOC =  -Vaxlib
+F90FLAGS = -O3  -module $(MODULES) -I $(MODULES)
+LIBLOC =  -Vaxlib
 
 
 ##################################
@@ -33,7 +33,7 @@ LDFLAGS = $(F90FLAGS)
 	rm -f $%
 
 #all:	cut_vct.x put_vct.x put_vat.x put.x
-all:	cut_vct.x put_vct.x  put.x cube.x cube_shell.x
+all:	cut_vct.x put_vct.x  put.x cube.x cube_shell.x read_write_n00.x
 
 cut_vct.x:	$(BIN)/cut_vct.x
 put_vct.x:	$(BIN)/put_vct.x
@@ -41,8 +41,7 @@ put_vat.x:	$(BIN)/put_vat.x
 put.x:	        $(BIN)/put.x
 cube.x:		$(BIN)/cube.x
 cube_shell.x:	$(BIN)/cube_shell.x
-
-
+read_write_n00.x:	$(BIN)/read_write_n00.x
 
 clean:
 	@rm -f *.o *.il *.mod $(MODULES)/*.mod libbabel.a $(BIN)/*.x
@@ -78,4 +77,6 @@ $(BIN)/cube.x:
 	$(F90)  cubeFCCandBCC_v1.f -o $(BIN)/cube.x  $(LIBLOC)
 $(BIN)/cube_shell.x:  
 	$(F90)  cubeFCCandBCC_v3.f90 -o $(BIN)/cube_shell.x  $(LIBLOC)
+$(BIN)/read_write_n00.x:  
+	$(F90)  read_write_n00.f90 -o $(BIN)/read_write_n00.x  $(LIBLOC)
 

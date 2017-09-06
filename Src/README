@@ -1,0 +1,22 @@
+Makefile_gfortran - Makefile for gfortran. Tested for versions < 4.8.5
+Makefile_ifort    - Makefile for ifort.    Tested for versions < Composer 2016
+
+Compilation with ifort:
+
+cp Makefile_ifort Makefile ; make
+
+The executables are in bin
+cd bin
+ls -l bin
+
+
+-rwxr-xr-x 1 marinica users  810344 Sep  6 15:40 cube.x
+-rwxr-xr-x 1 marinica users  819496 Sep  6 15:40 cube_shell.x
+-rwxr-xr-x 1 marinica users 1149560 Sep  6 15:40 cut_vct.x
+-rwxr-xr-x 1 marinica users 1082792 Sep  6 15:40 put.x
+-rwxr-xr-x 1 marinica users 1243248 Sep  6 15:40 put_vct.x
+-rwxr-xr-x 1 marinica users  830208 Sep  6 15:40 read_write_n00.x
+
+
+Probably you will use only cube.x and put_vct.x
+
