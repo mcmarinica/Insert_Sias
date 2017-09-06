@@ -33,12 +33,14 @@ LDFLAGS = $(F90FLAGS)
 	rm -f $%
 
 #all:	cut_vct.x put_vct.x put_vat.x put.x
-all:	cut_vct.x put_vct.x  put.x
+all:	cut_vct.x put_vct.x  put.x cube.x cube_shell.x
 
 cut_vct.x:	$(BIN)/cut_vct.x
 put_vct.x:	$(BIN)/put_vct.x
 put_vat.x:	$(BIN)/put_vat.x
 put.x:	        $(BIN)/put.x
+cube.x:		$(BIN)/cube.x
+cube_shell.x:	$(BIN)/cube_shell.x
 
 
 clean:
@@ -71,4 +73,8 @@ $(BIN)/put_vat.x: libbabel.a put_vat.o
 	$(LD) $(LDFLAGS) -o $(BIN)/put_vat.x put_vat.o libbabel.a $(LIBLOC)
 $(BIN)/put.x:  
 	$(F90)  module_pbc.f90 math.f90 lapack.f putSIAinBCC_V4.f90 -o $(BIN)/put.x  $(LIBLOC)
+$(BIN)/cube.x:  
+	$(F90)  cubeFCCandBCC_v1.f -o $(BIN)/cube.x  $(LIBLOC)
+$(BIN)/cube_shell.x:  
+	$(F90)  cubeFCCandBCC_v3.f90 -o $(BIN)/cube_shell.x  $(LIBLOC)
 
