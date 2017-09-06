@@ -175,7 +175,7 @@
 
        else if (tsia.eq.5) then
          volc=1.d0
-         call write_out_v (nall,ntemp,nsia,nsize,volc,nsite,rx,ry,rz,a)
+         call write_out_vv (nall,ntemp,nsia,nsize,volc,nsite,rx,ry,rz,a)
        else if ((tsia.eq.6).or.(tsia==67)) then     
          write(*,*) 'ntemp',ntemp
          write(*,*) 'nsia',nsia

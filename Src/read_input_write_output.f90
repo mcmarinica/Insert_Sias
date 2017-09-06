@@ -856,7 +856,7 @@ end if
    end
 !#####################################################################
            
-   subroutine write_out_v (nall,ntemp,nsia,nsize,volc,nsite,rx,  &
+   subroutine write_out_vv (nall,ntemp,nsia,nsize,volc,nsite,rx,  &
                    ry,rz,a)
    use math
    use pbc
