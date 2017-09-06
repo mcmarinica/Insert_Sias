@@ -1,8 +1,0 @@
-        !COMPILER-GENERATED INTERFACE MODULE: Thu Sep 16 12:09:22 2010
-        MODULE READ_NSIA__genmod
-          INTERFACE 
-            SUBROUTINE READ_NSIA(NSIA)
-              INTEGER(KIND=4) :: NSIA
-            END SUBROUTINE READ_NSIA
-          END INTERFACE 
-        END MODULE READ_NSIA__genmod
