@@ -1,0 +1,15 @@
+        !COMPILER-GENERATED INTERFACE MODULE: Thu Sep 16 12:09:23 2010
+        MODULE READ_CONFIG_SIA__genmod
+          INTERFACE 
+            SUBROUTINE READ_CONFIG_SIA(NSIA,NS1,NS2,NS3,N1MAX,N2MAX,    &
+     &N3MAX)
+              INTEGER(KIND=4) :: NSIA
+              INTEGER(KIND=4) :: NS1(NSIA)
+              INTEGER(KIND=4) :: NS2(NSIA)
+              INTEGER(KIND=4) :: NS3(NSIA)
+              INTEGER(KIND=4) :: N1MAX
+              INTEGER(KIND=4) :: N2MAX
+              INTEGER(KIND=4) :: N3MAX
+            END SUBROUTINE READ_CONFIG_SIA
+          END INTERFACE 
+        END MODULE READ_CONFIG_SIA__genmod

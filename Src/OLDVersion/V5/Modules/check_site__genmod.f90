@@ -1,0 +1,25 @@
+        !COMPILER-GENERATED INTERFACE MODULE: Wed Sep 18 15:09:44 2013
+        MODULE CHECK_SITE__genmod
+          INTERFACE 
+            SUBROUTINE CHECK_SITE(TSIA,NTEMP,NSIZE,NSIA,NLAC_REMOVE,N1, &
+     &N2,N3,NS1,NS2,NS3,NSITE,NSITE_M,NSITE_OCTA_VAC_REMOVE,            &
+     &NSITE_OCTA_VAC_REMOVE_TYPE,TYPE_OCTA)
+              INTEGER(KIND=4) :: NSIA
+              INTEGER(KIND=4) :: NSIZE
+              INTEGER(KIND=4) :: TSIA
+              INTEGER(KIND=4) :: NTEMP
+              INTEGER(KIND=4), INTENT(OUT) :: NLAC_REMOVE
+              INTEGER(KIND=4) :: N1(NSIZE)
+              INTEGER(KIND=4) :: N2(NSIZE)
+              INTEGER(KIND=4) :: N3(NSIZE)
+              INTEGER(KIND=4) :: NS1(NSIA)
+              INTEGER(KIND=4) :: NS2(NSIA)
+              INTEGER(KIND=4) :: NS3(NSIA)
+              INTEGER(KIND=4) :: NSITE(NSIA)
+              INTEGER(KIND=4) :: NSITE_M(4,NSIA)
+              INTEGER(KIND=4) :: NSITE_OCTA_VAC_REMOVE(10*NSIA)
+              INTEGER(KIND=4) :: NSITE_OCTA_VAC_REMOVE_TYPE(10*NSIA)
+              INTEGER(KIND=4) :: TYPE_OCTA(NSIA)
+            END SUBROUTINE CHECK_SITE
+          END INTERFACE 
+        END MODULE CHECK_SITE__genmod
