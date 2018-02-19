@@ -87,7 +87,7 @@ CONTAINS
           write(0,*)' > 0:  if INFO = i, U(i,i) is exactly zero.  The factorization'
           write(0,*)'has been completed, but the factor U is exactly'
           write(0,*)'singular, so the solution could not be computed.'
-          STOP'< MatInv >'
+          STOP '< MatInv >'
        endif
        B(1:n,1:n)=invA(1:n,1:n)
        deallocate(tempA, invA, IPIV)
