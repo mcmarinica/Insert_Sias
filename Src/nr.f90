@@ -69,7 +69,7 @@
 5       indx(l)=indx(j)
         indx(j)=indxt
         jstack=jstack+2
-        if(jstack.gt.NSTACK)pause 'NSTACK too small in indexx'
+        if(jstack.gt.NSTACK) write(*,*)  'NSTACK too small in indexx'
         if(ir-i+1.ge.j-l)then
           istack(jstack)=ir
           istack(jstack-1)=i

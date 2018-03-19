@@ -302,7 +302,7 @@ end if
      read(23,*) rgx(i),rgy(i),rgz(i)
     end do
     close(23)
-    else if ((tsia==6).or.(tsia==67)) then
+    else if ((tsia==7).or.(tsia==6).or.(tsia==67)) then
     write(*,*) 'Bye bye Platon...'
     write(*,*) 'Welcome in the Archimedian solids'
    

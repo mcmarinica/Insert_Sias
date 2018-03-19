@@ -101,9 +101,80 @@ contains
 
 
 
-
-
-
-
-
  end module octahedre
+
+module icosaedre
+
+   implicit none
+   real(8) :: pi=2.d0*acos(0.d0)
+   real(8) :: deg2rad=2.d0*acos(0.d0)/180.d0
+
+
+   type icosah 
+   real(8) :: center(3)    ! center of the octhaedre
+   real(8) :: link(3,4)    ! the first direction which can link an other
+                           ! tetrahedron ( can be the the center of an 
+			   ! octa from the second type)
+   real(8) :: sia(3,12)          ! vacancy in the corner
+   real(8) :: add(3,1)          ! vacancy in the corner
+   real(8) :: removeatom(3,6)    ! vacancy up-down side 
+                           ! aroud the atom 1 to 4
+   end type icosah
+
+   type(icosah) , dimension(4) ::  icos
+
+contains
+ 
+  subroutine init_icos
+  integer i,j
+   real(8) :: vec_temp_in(3),vec_temp_out(3)
+!........construction of the octo's............
+   !the first octo is based in the first cube 111 center
+   
+   
+   !the other 8 atoms which must be removed (each one one face):
+
+   icos(1)%removeatom(1:3,1)=(/ -1,  0,   0 /) !011
+   icos(1)%removeatom(1:3,2)=(/  1,  0,   0 /) !211
+   icos(1)%removeatom(1:3,3)=(/  0,  0,  -1 /) !110
+   icos(1)%removeatom(1:3,4)=(/  0,  0,   1 /) !112
+   icos(1)%removeatom(1:3,5)=(/  0, -1,   0 /) !101
+   icos(1)%removeatom(1:3,6)=(/  0,  1,   0 /) !121
+   
+
+   !atom in the center 
+   icos(1)%add(1:3,1)=(/  0.0, 0.0,   0.0 /)  !111
+
+   !the other 12 atoms in SIAs position:
+   icos(1)%sia(1:3, 1)=(/ -1.0d0,  0.0d0,   0.5d0 /) !011
+   icos(1)%sia(1:3, 2)=(/ -1.0d0,  0.0d0,  -0.5d0 /) !011
+
+   icos(1)%sia(1:3, 3)=(/  1.0d0,  0.0d0,   0.5d0 /) !211
+   icos(1)%sia(1:3, 4)=(/  1.0d0,  0.0d0,  -0.5d0 /) !211
+
+   icos(1)%sia(1:3, 5)=(/  0.0d0,  0.5d0,  -1.0d0 /) !110
+   icos(1)%sia(1:3, 6)=(/  0.0d0, -0.5d0,  -1.0d0 /) !110
+
+   icos(1)%sia(1:3, 7)=(/  0.0d0,  0.5d0,   1.0d0 /) !112
+   icos(1)%sia(1:3, 8)=(/  0.0d0, -0.5d0,   1.0d0 /) !112
+
+   icos(1)%sia(1:3, 9)=(/  0.5d0, -1.0d0,   0.0d0 /) !101
+   icos(1)%sia(1:3,10)=(/ -0.5d0, -1.0d0,   0.0d0 /) !101
+
+
+   icos(1)%sia(1:3,11)=(/  0.5d0,  1.0d0,   0.0d0 /) !121
+   icos(1)%sia(1:3,12)=(/ -0.5d0,  1.0d0,   0.0d0 /) !121
+
+
+
+
+  return
+  end  subroutine init_icos
+
+
+
+ end module icosaedre
+
+
+
+

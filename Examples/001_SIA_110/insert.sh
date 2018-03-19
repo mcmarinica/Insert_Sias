@@ -17,6 +17,7 @@ EOF
 
 cat > put.inp <<EOF
 1
+2 2 2
 EOF
 
 

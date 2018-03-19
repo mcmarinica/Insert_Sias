@@ -178,6 +178,7 @@ end subroutine   care_check_site_migration
                               nsite,nsite_m,nsite_octa_vac_remove,nsite_octa_vac_remove_type,type_octa)                
        
        use octahedre
+       use icosaedre
        use the_111_smooth 
        use the_100_smooth 
        implicit none
@@ -189,6 +190,7 @@ end subroutine   care_check_site_migration
        integer, dimension(4,nsia) :: nsite_m,ns1_m,ns2_m,ns3_m          
        integer, dimension(10*nsia) :: nsite_octa_vac_remove, ns1_octa,ns2_octa,ns3_octa          
        integer, dimension(10*nsia) :: nsite_octa_vac_remove_type
+       integer :: ti_icos
 
         itst=0
         itst2=0
@@ -238,7 +240,7 @@ end subroutine   care_check_site_migration
 
         end do !ntemp
       end do   !is
-
+      if (tsia.ne.7) then
         if (itst.ne.nsia) then
          print*, 'there is a big problem in input'
          print*, 'Check check_site'
@@ -246,6 +248,7 @@ end subroutine   care_check_site_migration
          print*, itst, nsia
          stop          
        end if  
+      end if 
 
 
        if (tsia.eq.4) then       
@@ -293,98 +296,121 @@ end subroutine   care_check_site_migration
           stop          
           end if                 
 
-        
-        else if ((tsia.eq.6).or.(tsia==67)) then
+        !C15 case ...
+       else if ((tsia.eq.6).or.(tsia==67)) then
 
        
        
        ilac_remove=0
        do ii=1,nsia
-        ti_octa=type_octa(ii)
-        if ( (ti_octa.eq.1).or.(ti_octa.eq.2) ) then  ! This is perfect C15  I2
-         do jj=1,4 
-          ilac_remove=ilac_remove+1
-          ns1_octa(ilac_remove) = ns1(ii)+nint(octo(ti_octa)%atom(1,jj))       
-          ns2_octa(ilac_remove) = ns2(ii)+nint(octo(ti_octa)%atom(2,jj))       
-          ns3_octa(ilac_remove) = ns3(ii)+nint(octo(ti_octa)%atom(3,jj))
-          nsite_octa_vac_remove_type(ilac_remove)= 70  ! 70 = gao
-          !debug write(*,'(2i5,3i3)') jj, ti_octa,&
-          !debug nint(octo(ti_octa)%atom(1,jj)), nint(octo(ti_octa)%atom(2,jj)), nint(octo(ti_octa)%atom(3,jj))
-         end do
+         ti_octa=type_octa(ii)
+         if ( (ti_octa.eq.1).or.(ti_octa.eq.2) ) then  ! This is perfect C15  I2
+           do jj=1,4 
+             ilac_remove=ilac_remove+1
+             ns1_octa(ilac_remove) = ns1(ii)+nint(octo(ti_octa)%atom(1,jj))       
+             ns2_octa(ilac_remove) = ns2(ii)+nint(octo(ti_octa)%atom(2,jj))       
+             ns3_octa(ilac_remove) = ns3(ii)+nint(octo(ti_octa)%atom(3,jj))
+             nsite_octa_vac_remove_type(ilac_remove)= 70  ! 70 = gao
+             !debug write(*,'(2i5,3i3)') jj, ti_octa,&
+             !debug nint(octo(ti_octa)%atom(1,jj)), nint(octo(ti_octa)%atom(2,jj)), nint(octo(ti_octa)%atom(3,jj))
+           end do
          
-         do jj=1,6
-          ilac_remove=ilac_remove+1
-          ns1_octa(ilac_remove) = ns1(ii)+nint(octo(ti_octa)%removeatom(1,jj)) 
-          ns2_octa(ilac_remove) = ns2(ii)+nint(octo(ti_octa)%removeatom(2,jj)) 
-          ns3_octa(ilac_remove) = ns3(ii)+nint(octo(ti_octa)%removeatom(3,jj)) 
-          nsite_octa_vac_remove_type(ilac_remove)= 71  ! 71 = sia
-          !debug write(*,'(2i5,3i3)') jj, ti_octa,&    
-          !debug  nint(octo(ti_octa)%removeatom(1,jj)), nint(octo(ti_octa)%removeatom(2,jj)), nint(octo(ti_octa)%removeatom(3,jj))
-         end do
+           do jj=1,6
+             ilac_remove=ilac_remove+1
+             ns1_octa(ilac_remove) = ns1(ii)+nint(octo(ti_octa)%removeatom(1,jj)) 
+             ns2_octa(ilac_remove) = ns2(ii)+nint(octo(ti_octa)%removeatom(2,jj)) 
+             ns3_octa(ilac_remove) = ns3(ii)+nint(octo(ti_octa)%removeatom(3,jj)) 
+             nsite_octa_vac_remove_type(ilac_remove)= 71  ! 71 = sia
+             !debug write(*,'(2i5,3i3)') jj, ti_octa,&    
+             !debug  nint(octo(ti_octa)%removeatom(1,jj)), nint(octo(ti_octa)%removeatom(2,jj)), nint(octo(ti_octa)%removeatom(3,jj))
+           end do
        
-        else if (ti_octa.eq.4) then  ! This is the new object for odd clusters I2 + I 
-          ti_octa=ti_octa-2
-          ilac_remove=ilac_remove+1
-          ns1_octa(ilac_remove) = ns1(ii)+nint(octo(ti_octa)%atom(1,1))       
-          ns2_octa(ilac_remove) = ns2(ii)+nint(octo(ti_octa)%atom(2,1))       
-          ns3_octa(ilac_remove) = ns3(ii)+nint(octo(ti_octa)%atom(3,1))       
-          nsite_octa_vac_remove_type(ilac_remove)= 70  ! 70 = gao
+          else if (ti_octa.eq.4) then  ! This is the new object for odd clusters I2 + I 
+            ti_octa=ti_octa-2
+            ilac_remove=ilac_remove+1
+            ns1_octa(ilac_remove) = ns1(ii)+nint(octo(ti_octa)%atom(1,1))       
+            ns2_octa(ilac_remove) = ns2(ii)+nint(octo(ti_octa)%atom(2,1))       
+            ns3_octa(ilac_remove) = ns3(ii)+nint(octo(ti_octa)%atom(3,1))       
+            nsite_octa_vac_remove_type(ilac_remove)= 70  ! 70 = gao
           
           
-          ilac_remove=ilac_remove+1
+            ilac_remove=ilac_remove+1
        
-          ns1_octa(ilac_remove) = ns1(ii)+nint(octo(ti_octa)%removeatom(1,4)) 
-          ns2_octa(ilac_remove) = ns2(ii)+nint(octo(ti_octa)%removeatom(2,4)) 
-          ns3_octa(ilac_remove) = ns3(ii)+nint(octo(ti_octa)%removeatom(3,4)) 
-          nsite_octa_vac_remove_type(ilac_remove)= 71  ! 71 = sia
-        
-        end if
-       end do
+            ns1_octa(ilac_remove) = ns1(ii)+nint(octo(ti_octa)%removeatom(1,4)) 
+            ns2_octa(ilac_remove) = ns2(ii)+nint(octo(ti_octa)%removeatom(2,4)) 
+            ns3_octa(ilac_remove) = ns3(ii)+nint(octo(ti_octa)%removeatom(3,4)) 
+            nsite_octa_vac_remove_type(ilac_remove)= 71  ! 71 = sia
+          end if  
 
-        nlac_remove=ilac_remove 
+        end do
+        !ico case ... 
+       else if (tsia.eq.7) then
+          ilac_remove=0
+          do ii=1,nsia
+            ti_icos=1
+              do jj=1,6
+                ilac_remove=ilac_remove+1
+                ns1_octa(ilac_remove) = ns1(ii)+nint(icos(ti_icos)%removeatom(1,jj))       
+                ns2_octa(ilac_remove) = ns2(ii)+nint(icos(ti_icos)%removeatom(2,jj))       
+                ns3_octa(ilac_remove) = ns3(ii)+nint(icos(ti_icos)%removeatom(3,jj))
+                nsite_octa_vac_remove_type(ilac_remove)= 70  ! 70 = Sias on the face of the cube
+                !debug write(*,'(2i5,3i3)') jj, ti_octa,&
+                !debug nint(octo(ti_octa)%atom(1,jj)), nint(octo(ti_octa)%atom(2,jj)), nint(octo(ti_octa)%atom(3,jj))
+              end do
+         
+              do jj=1,1
+                ilac_remove=ilac_remove+1
+                ns1_octa(ilac_remove) = ns1(ii)+nint(icos(ti_icos)%add(1,jj)) 
+                ns2_octa(ilac_remove) = ns2(ii)+nint(icos(ti_icos)%add(2,jj)) 
+                ns3_octa(ilac_remove) = ns3(ii)+nint(icos(ti_icos)%add(3,jj)) 
+                nsite_octa_vac_remove_type(ilac_remove)= 71  ! 71 =  the center of the icosaedre
+                !debug write(*,'(2i5,3i3)') jj, ti_octa,&    
+                !debug  nint(octo(ti_octa)%removeatom(1,jj)), nint(octo(ti_octa)%removeatom(2,jj)), nint(octo(ti_octa)%removeatom(3,jj))
+             end do
+           end do
+        end if !if tsia eq 4 
+
+
+       if ((tsia.eq.7).or.(tsia.eq.6).or.(tsia.eq.67)) then
  
-        minval1=MINVAL(ns1_octa(1:nlac_remove))
-        minval2=MINVAL(ns2_octa(1:nlac_remove))
-        minval3=MINVAL(ns3_octa(1:nlac_remove))
-        write(*,'("The minval on x,y and z.....:",3i6)') & 
+         nlac_remove=ilac_remove 
+         minval1=MINVAL(ns1_octa(1:nlac_remove))
+         minval2=MINVAL(ns2_octa(1:nlac_remove))
+         minval3=MINVAL(ns3_octa(1:nlac_remove))
+         write(*,'("The minval on x,y and z.....:",3i6)') & 
                     minval1,minval2,minval3
-        if(  (minval1.lt.0).or.(minval2.lt.0).or.(minval3.lt.0) ) then
+         if(  (minval1.lt.0).or.(minval2.lt.0).or.(minval3.lt.0) ) then
            Write(*,*) & 
             'There are atoms which exceed the box .... change the input'
           stop
-       end if
+         end if
        
-       itst=0
-       do is=1,nlac_remove
-       do i=1,ntemp
+         itst=0
+         do is=1,nlac_remove
+           do i=1,ntemp
              if (n1(i)==ns1_octa(is)) then
-              if (n2(i)==ns2_octa(is)) then
-               if (n3(i)==ns3_octa(is)) then
-                itst =itst +1
-                nsite_octa_vac_remove(is)= i   ! This site will be removed in the end
+               if (n2(i)==ns2_octa(is)) then
+                 if (n3(i)==ns3_octa(is)) then
+                   itst =itst +1
+                   nsite_octa_vac_remove(itst)= i   ! This site will be removed in the end
                                                   ! because it is a Gao or a vacancy in a dumbbell.
-                !debug write(*,*) 'check',i,n3(i),ii,is
-               end if 
-              end if
+                   !debug write(*,*) 'check',is, itst, nsite_octa_vac_remove(itst)
+                 end if 
+               end if
              end if
-             
-
-
-
-             
-          end do
+           end do
          end do  
-                           
-        
-       if (itst.ne.ilac_remove) then
-         print*, 'there is a big problem in input'
-         print*, 'Check <check_site> 10*'
-         print*, itst, nsia
-         stop          
-       end if  
+         if (tsia.ne.7) then 
+         if (itst.ne.ilac_remove) then
+           print*, 'there is a big problem in input'
+           print*, 'Check <check_site> 10*'
+           print*, itst, nsia
+           stop          
+         end if
+         end if 
 
-       
-       end if   !if tsia.eq.4
+         nlac_remove=itst
+       end if   !the last if 
                            
        return
        end                            

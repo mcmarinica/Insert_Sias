@@ -50,13 +50,14 @@
   
   if (nlac_remove.gt.10*nsia) then
    write(*,*) 'nlac_remove is greater than 10*nsia'
-   write(*,*) 'Problems!!'
+   write(*,*) 'Problems in dimension of the vector nsite_octa_vac_remove !!'
    stop
   end if
   
     icnt=0
     do ii=1,nlac_remove
       list_no_order(ii)=nsite_octa_vac_remove(ii)
+      !debug write(*,*) 'list', list_no_order(ii),ii, nlac_remove, nlac_remove
     end do
   
    call indexx (nlac_remove,list_no_order,indx) 
@@ -66,20 +67,19 @@
    !debug write(*,*) 'list', list_no_order(indx(1)),i_double
    do    i=1,nlac_remove-1
      if (dabs(list_no_order(indx(i+1))-list_no_order(indx(i))).lt.0.01d0) then 
-    i_double = i_double+1 
-   end if
-   !debug write(*,*) 'list', list_no_order(indx(i+1)),i_double
+       i_double = i_double+1 
+     end if
+     !debug write(*,*) 'list', list_no_order(indx(i+1)),i_double
    end do
    
     do ii=1,nlac_remove
-     if(dabs(list_no_order(ii)-nsite_octa_vac_remove(ii)).gt.1d-5)& 
-         then
-       write(*,*) '!!!! in list_no_order and nsite_octa_vac_remove '
-        end if
+       if(dabs(list_no_order(ii)-nsite_octa_vac_remove(ii)).gt.1d-5) then
+         write(*,*) '!!!! in list_no_order and nsite_octa_vac_remove'
+       end if
     end do
 
    
-     write(*,*) 'The number of vacancies which are superposed....... ........: ',nlac_remove        
+     write(*,*) 'The number of total vacancies (which can be superposed).....: ',nlac_remove        
      write(*,*) 'The number of DIFFERENT VACANCIES left in the input ........: ',nlac_remove-i_double
      ndatoms=nlac_remove-i_double
    
@@ -106,14 +106,18 @@
   icnt=1
   do    i=1,nlac_remove-1
     if (dabs(list_no_order(indx(i+1))-list_no_order(indx(i))).lt.0.01d0) then 
-   i_double = i_double+1 
-  else 
-   icnt=icnt+1
-   atoms_to_remove(icnt)=list_no_order(indx(i+1))
-   atoms_to_remove_type(icnt)=nsite_octa_vac_remove_type(indx(i+1))
-   !debug write(*,*) 'toremove', atoms_to_remove(icnt)
-  end if 
+      i_double = i_double+1 
+    else 
+      icnt=icnt+1
+      atoms_to_remove(icnt)=list_no_order(indx(i+1))
+      atoms_to_remove_type(icnt)=nsite_octa_vac_remove_type(indx(i+1))
+    end if 
   end do
+
+  !debug do i=1,icnt
+  !debug    write(*,*) 'toremove', i, atoms_to_remove(i), ndatoms
+  !debug end do
+
   !debug write(*,*) 'list', icnt,i_double,10*nsia-i_double
   
   
@@ -205,109 +209,235 @@
    return
    end
 
-       subroutine offlattice_compute_atoms_to_remove(gndatoms,rxgaos,rygaos,rzgaos,temprxgaos,temprygaos,temprzgaos,&
-                             offlattice_no_order,indx,nsia,natoms_extra)
 
-       implicit none
+!#####################################################################
 
-       integer, intent(in) :: nsia
-       integer,  intent(in) :: indx (12*nsia),gndatoms,natoms_extra
-       
-       real(8), dimension(12*nsia),    intent(in) :: offlattice_no_order,temprxgaos,temprygaos,temprzgaos
-       real(8), dimension(gndatoms),  intent(out) :: rxgaos,rygaos,rzgaos
-       integer :: i_double,i,icnt
+subroutine  ico_offlattice_get_coordinates_and_order(a0,rxgaos,rygaos,rzgaos,&
+                                                   rx,    ry,    rz,ns1,ns2,ns3,    &
+                 offlattice_no_order,indx,nsite,type_octa,nsia,nsize,gndatoms,natoms_extra)
 
-       i_double=0
-       icnt=1
-       
-        rxgaos(1)=temprxgaos(indx(1))
-        rygaos(1)=temprygaos(indx(1))
-        rzgaos(1)=temprzgaos(indx(1))
-       do    i=1,natoms_extra-1
-         if (dabs(offlattice_no_order(indx(i+1))-offlattice_no_order(indx(i))).lt.0.1d0) then 
-       i_double = i_double+1 
-       else
-        icnt=icnt+1
-        rxgaos(icnt)=temprxgaos(indx(i+1))
-        rygaos(icnt)=temprygaos(indx(i+1))
-        rzgaos(icnt)=temprzgaos(indx(i+1))
+use icosaedre
+implicit none
 
-       end if
-       end do
-       
-         write(*,'("II The number of DIFFERENT GAOS atoms which &
-           must be removed .: ",i6)') ,i_double        
-       return
-       end
-       
+integer, intent(in) :: nsia,nsize
+integer, intent(in) :: nsite(nsia),type_octa(nsia), ns1(nsia), ns2(nsia), ns3(nsia)
+real(8), intent(in)   :: a0
+real(8), dimension(nsize)  :: rx,ry,rz
+integer,  intent(out) :: indx (13*nsia),gndatoms,natoms_extra
+
+real(8), dimension(13*nsia),  intent(out) :: offlattice_no_order,rxgaos,rygaos,rzgaos
+integer :: i,it_icos,i_double,icnt,ii,jj
+real(8)   :: a02,alpha,origin(3)
+        
+      
+a02=a0/2.d0
+alpha=1.0d0
+icnt=0
+do i=1,nsia
+  it_icos=1
+  origin(1:3)=(/ ns1(i),  ns2(i), ns3(i) /)   
+    do jj=1,12 !loop over the three atoms located in the corner of the tetrahedron
+       icnt=icnt+1
+       rxgaos(icnt)=a02*(alpha*icos(it_icos)%sia(1,jj)+ origin(1))
+       rygaos(icnt)=a02*(alpha*icos(it_icos)%sia(2,jj)+ origin(2))
+       rzgaos(icnt)=a02*(alpha*icos(it_icos)%sia(3,jj)+ origin(3))
+       offlattice_no_order(icnt)=rxgaos(icnt)**3+10*rygaos(icnt)**3+100*rzgaos(icnt)**3
+       write(*,'("ig", i6,f20.7,3f18.6)') icnt, offlattice_no_order(icnt), rxgaos(icnt), rygaos(icnt), rzgaos(icnt) 
+   end do
+
+     do jj=1,1 !loop over the three atoms located in the corner of the tetrahedron
+       icnt=icnt+1
+       rxgaos(icnt)=a02*(alpha*icos(it_icos)%add(1,jj)+ origin(1))
+       rygaos(icnt)=a02*(alpha*icos(it_icos)%add(2,jj)+ origin(2))
+       rzgaos(icnt)=a02*(alpha*icos(it_icos)%add(3,jj)+ origin(3))
+       offlattice_no_order(icnt)=rxgaos(icnt)**3+10*rygaos(icnt)**3+100*rzgaos(icnt)**3
+       write(*,'("ig", i6,f20.7,3f18.6)') icnt, offlattice_no_order(icnt), rxgaos(icnt), rygaos(icnt), rzgaos(icnt) 
+     end do
+end do 
+   
+ natoms_extra=icnt
+ if (natoms_extra.ne.13*nsia) then
+   write(*,*) '<ico_offlattice_get_coordinates_and_order>  no of offlatice atoms is wrong', 13*nsia, natoms_extra
+   stop
+ end if 
+
+ call indexx (13*nsia, offlattice_no_order,indx) 
+
+
+ do jj=1,natoms_extra
+   ii=indx(jj)
+   write(*,'("gg", i6,f20.7,3f18.6)') ii, offlattice_no_order(ii), rxgaos(ii), rygaos(ii), rzgaos(ii) 
+ end do
+
+ i_double=0
+ !debug write(*,'("listgaos",f14.3,i4,3f12.3)') &
+ !debug offlattice_no_order(indx(1)),i_double,rxgaos(1),rygaos(1),rzgaos(1)
+ do    i=1,icnt-1
+   !old was 1.1
+ if (dabs(offlattice_no_order(indx(i+1))-offlattice_no_order(indx(i))).lt.1.1d0) then 
+ i_double = i_double+1 
+ end if
+ !debug write(*,'("listgaos",f14.3,i4,3f12.3)') &
+ !debug offlattice_no_order(indx(i+1)),i_double,&
+ !debug rxgaos(indx(i+1)),rygaos(indx(i+1)),rzgaos(indx(i+1))
+ end do
+ 
+ 
+   write(*,*) 'The number of removed GAOS ..................................: ',i_double        
+   write(*,*) 'The number of DIFFERENT GAOS atoms left in input ............: ',icnt-i_double
+   gndatoms=icnt-i_double
+
+return
+end subroutine  ico_offlattice_get_coordinates_and_order
+
+subroutine ico_offlattice_compute_atoms_to_remove(gndatoms,rxgaos,rygaos,rzgaos,temprxgaos,temprygaos,temprzgaos,&
+                      offlattice_no_order,indx,nsia,natoms_extra)
+
+implicit none
+
+integer, intent(in) :: nsia
+integer,  intent(in) :: indx (13*nsia),gndatoms,natoms_extra
+
+real(8), dimension(13*nsia),    intent(in) :: offlattice_no_order,temprxgaos,temprygaos,temprzgaos
+real(8), dimension(gndatoms),  intent(out) :: rxgaos,rygaos,rzgaos
+integer :: i_double,i,icnt
+
+i_double=0
+icnt=1
+
+ rxgaos(1)=temprxgaos(indx(1))
+ rygaos(1)=temprygaos(indx(1))
+ rzgaos(1)=temprzgaos(indx(1))
+do    i=1,natoms_extra-1
+  if (dabs(offlattice_no_order(indx(i+1))-offlattice_no_order(indx(i))).lt.0.1d0) then 
+     i_double = i_double+1 
+  else
+    icnt=icnt+1
+    rxgaos(icnt)=temprxgaos(indx(i+1))
+    rygaos(icnt)=temprygaos(indx(i+1))
+    rzgaos(icnt)=temprzgaos(indx(i+1))
+  end if
+end do
+
+do i=1,icnt
+write(*,*) 'gaos', i, rxgaos(i), rygaos(i),rzgaos(i)
+end do
+  write(*,'("II Final number of removed GAOS  .: ",i6)') i_double        
+return
+end subroutine ico_offlattice_compute_atoms_to_remove
+
+
+
+subroutine offlattice_compute_atoms_to_remove(gndatoms,rxgaos,rygaos,rzgaos,temprxgaos,temprygaos,temprzgaos,&
+                      offlattice_no_order,indx,nsia,natoms_extra)
+
+implicit none
+
+integer, intent(in) :: nsia
+integer,  intent(in) :: indx (12*nsia),gndatoms,natoms_extra
+
+real(8), dimension(12*nsia),    intent(in) :: offlattice_no_order,temprxgaos,temprygaos,temprzgaos
+real(8), dimension(gndatoms),  intent(out) :: rxgaos,rygaos,rzgaos
+integer :: i_double,i,icnt
+
+i_double=0
+icnt=1
+
+ rxgaos(1)=temprxgaos(indx(1))
+ rygaos(1)=temprygaos(indx(1))
+ rzgaos(1)=temprzgaos(indx(1))
+do    i=1,natoms_extra-1
+  if (dabs(offlattice_no_order(indx(i+1))-offlattice_no_order(indx(i))).lt.0.1d0) then 
+i_double = i_double+1 
+else
+ icnt=icnt+1
+ rxgaos(icnt)=temprxgaos(indx(i+1))
+ rygaos(icnt)=temprygaos(indx(i+1))
+ rzgaos(icnt)=temprzgaos(indx(i+1))
+
+end if
+end do
+
+  write(*,'("II Final number of removed GAOS  .: ",i6)') i_double        
+return
+end subroutine offlattice_compute_atoms_to_remove
+
 !#####################################################################
                
 
 
 
-       subroutine write_coordinates (ntemp,nsize,new_solid,rxgaos,rygaos,rzgaos,gndatoms,atoms_to_remove,ndatoms,&
-                               rx,ry,rz)             
-       
-       use octahedre
-       implicit none
-       integer,intent(in)  :: ntemp,nsize,ndatoms,gndatoms
-       integer, intent(out)  :: new_solid
-       double precision,dimension(gndatoms),intent(in)     :: rxgaos,rygaos,rzgaos
-       double precision,dimension(ndatoms),intent(in)     :: atoms_to_remove(ndatoms)
-       double precision,dimension(nsize),intent(inout)     :: rx,ry,rz
-       double precision,dimension(nsize)     :: rxtemp,rytemp,rztemp
-       integer :: i,icnt,is,icard,i_test_card
-       !
-       !
-       ! 
-       icnt=0
-       rxtemp(:)=99999999.d0
-       rytemp(:)=99999999.d0
-       rztemp(:)=99999999.d0
-       write(*,*) ntemp, ndatoms
-       do i=1,gndatoms
-               icnt=icnt+1
-             rxtemp(icnt)=rxgaos(i)
-             rytemp(icnt)=rygaos(i)
-             rztemp(icnt)=rzgaos(i)
-                     write (77,'("atom Fe1   ",3f15.4)') rxgaos(icnt),rygaos(icnt),rzgaos(icnt)
-      end do 
-       
-       
-       
-       i_test_card=0
-       do i=1,ntemp
-        icard=0
-        do is=1,ndatoms
-         if (i==nint(atoms_to_remove(is))) then
-         i_test_card=i_test_card+1
-         icard=1
-         endif
-      end do    
-        if (icard==0) then
-         icnt=icnt+1
-         rxtemp(icnt)=rx(i)
-         rytemp(icnt)=ry(i)
-         rztemp(icnt)=rz(i)
-        end if
-      end do
-        
-        if (icnt.ne.nsize) then
-         write(*,*) 'The vector size is not correct...icnt vs nsize:',icnt,nsize
-         write(*,*) '<write_coordinates>'
-       ! stop
-       end if
-        
-        
-         write(*,*) 'Final number of atoms.....: ',icnt
-       new_solid=icnt
-      
-       rx(1:nsize)=rxtemp(1:nsize)!*volc
-       ry(1:nsize)=rytemp(1:nsize)!*volc
-       rz(1:nsize)=rztemp(1:nsize)!*volc
+subroutine write_coordinates (ntemp,nsize,new_solid,rxgaos,rygaos,rzgaos,gndatoms,atoms_to_remove,ndatoms,&
+                        rx,ry,rz)             
 
-       return
-       end
+use octahedre
+implicit none
+integer,intent(in)  :: ntemp,nsize,ndatoms,gndatoms
+integer, intent(out)  :: new_solid
+double precision,dimension(gndatoms),intent(in)     :: rxgaos,rygaos,rzgaos
+double precision,dimension(ndatoms),intent(in)     :: atoms_to_remove(ndatoms)
+double precision,dimension(nsize),intent(inout)     :: rx,ry,rz
+double precision,dimension(nsize)     :: rxtemp,rytemp,rztemp
+integer :: i,icnt,is,icard,i_test_card
+integer :: i1,i2
+!
+! 
+icnt=0
+rxtemp(:)=99999999.d0
+rytemp(:)=99999999.d0
+rztemp(:)=99999999.d0
+!ntemp   - the bulk reference
+!ndatoms - the atoms that should be removed
+!gndatoms- the extratoms as gaos, sias etc
+!debug write(*,*) 'write_coordinates  ntemp, ndatoms, gndatoms :', ntemp, ndatoms, gndatoms
+
+!writting the SIAs in 77 file
+do i=1,gndatoms
+  icnt=icnt+1
+  rxtemp(icnt)=rxgaos(i)
+  rytemp(icnt)=rygaos(i)
+  rztemp(icnt)=rzgaos(i)
+  write (77,'("atom Fe1   ",i6, 3f15.4)') icnt, rxgaos(icnt),rygaos(icnt),rzgaos(icnt)
+end do 
+
+
+i1=0
+i2=0
+i_test_card=0
+do i=1,ntemp
+  icard=0
+  do is=1,ndatoms
+    if (i==nint(atoms_to_remove(is))) then
+      i_test_card=i_test_card+1
+      icard=1
+      i1=i1+1
+    endif
+  end do    
+  if (icard==0) then
+    i2=i2+1
+    icnt=icnt+1
+    rxtemp(icnt)=rx(i)
+    rytemp(icnt)=ry(i)
+    rztemp(icnt)=rz(i)
+  end if
+end do
+  
+  if (icnt.gt.nsize) then
+   write(*,*) '<write_cordinates> Vector size not correct...icnt vs nsize:',icnt,nsize
+   write(*,*) '<write_cordinates> icnt should be lower than nsize:',icnt,nsize
+ ! stop
+ end if
+  
+   write(*,*) i1,i2,gndatoms, i1+i2+gndatoms
+   write(*,*) '<write_coordinates> Final number of atoms.:',icnt
+ new_solid=icnt
+ !in rx the first new_solid atoms are the real atoms of the final sistem. All others up to nsize are ghost atoms   
+ rx(1:nsize)=rxtemp(1:nsize)!*volc
+ ry(1:nsize)=rytemp(1:nsize)!*volc
+ rz(1:nsize)=rztemp(1:nsize)!*volc
+
+ return
+ end subroutine write_coordinates 
 
 
 !#####################################################################
@@ -339,77 +469,108 @@
        real(kind(1.d0)), dimension(3) :: xp,xc
        real(kind(1.d0))   :: dist_current, dist_ini
        integer :: it_a,i_count
-  
-       open(11,file='jsia.xyz')
-       open(12,file='sia.xyz')
-       open(19,file='usia.xyz')
-       open(16,file='jusia.xyz')
-       open(20,file='uvsia.xyz')
-       open(21,file='uvbsia.xyz')
-       open(23,file='uvbcsia.xyz')
-       open(24,file='uvbcsia_sim.xyz')
-       open(13,file='unit_cell',form='formatted') 
-       open (17,file='geom_new.data',form='formatted',status='unknown')
-       open (22,file='geom_org.data',form='formatted',status='unknown')
-       open (18,file='formd_new_ndm_scl.str',form='formatted',& 
-          status='unknown')
-       
-         CELLDM=1.0
+       integer :: f_jsia_xyz, f_sia_xyz, f_usia_xyz, f_jusia_xyz, f_uvsia_xyz, f_uvbsia_xyz, &
+                  f_uvbcsia_xyz, f_uvbcsia_sim_xyz, f_unit_cell,  f_geom_new_data, f_geom_org_data, &
+                  f_new_ndm_scl,f_formd_new_str 
+       write(*,*) ' nall,ntemp,new_solid,gndatoms, ndatoms',nall,ntemp,new_solid,gndatoms, ndatoms 
+
+       CELLDM=1.0
        in=1
-       
        a02=a0/2.d0
 
-      open (15,file='formd_new.str',form='formatted',status='unknown')
+
+
+       f_jsia_xyz=11
+       open(f_jsia_xyz,file='jsia.xyz')
+       f_sia_xyz=12
+       open(12,file='sia.xyz')
+
+       f_usia_xyz=19
+       open(f_usia_xyz,file='usia.xyz')
+
+       f_jusia_xyz=16
+       open(f_jusia_xyz,file='jusia.xyz')
+
+       f_uvsia_xyz=20
+       open(f_uvsia_xyz,file='uvsia.xyz')
+
+
+       f_uvbsia_xyz=21
+       open(f_uvbsia_xyz,file='uvbsia.xyz')
+
+       f_uvbcsia_xyz=23
+       open(f_uvbcsia_xyz,file='uvbcsia.xyz')
+
+
+       f_uvbcsia_sim_xyz=24
+       open(f_uvbcsia_sim_xyz,file='uvbcsia_sim.xyz')
+
+       f_unit_cell=13
+       open(f_unit_cell,file='unit_cell',form='formatted') 
+
+       f_geom_new_data=17
+       open (f_geom_new_data,file='geom_new.data',form='formatted',status='unknown')
+
+
+       f_geom_org_data=22
+       open (f_geom_org_data,file='geom_org.data',form='formatted',status='unknown')
+      
+       f_new_ndm_scl=18
+       open (f_new_ndm_scl,file='formd_new_ndm_scl.str',form='formatted',& 
+          status='unknown')
+       
+      f_formd_new_str=15
+      open (f_formd_new_str,file='formd_new.str',form='formatted',status='unknown')
         
-      write(15,'(i8)') new_solid
-        write(15,'(3f18.13)')a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
-        write(15,'(3f18.13)')a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
-        write(15,'(3f18.13)')a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
+      write(f_formd_new_str,'(i8)') new_solid
+      write(f_formd_new_str,'(3f18.13)')a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
+      write(f_formd_new_str,'(3f18.13)')a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
+      write(f_formd_new_str,'(3f18.13)')a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
 
 
-      write(17,'(i8)') new_solid
-      write(17,*) 1.0
-        write(17,'(3f18.13)')a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
-        write(17,'(3f18.13)')a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
-        write(17,'(3f18.13)')a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
+      write(f_geom_new_data,'(i8)') new_solid
+      write(f_geom_new_data,*) 1.0
+      write(f_geom_new_data,'(3f18.13)')a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
+      write(f_geom_new_data,'(3f18.13)')a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
+      write(f_geom_new_data,'(3f18.13)')a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
 
-      write(22,'(i8)') ntemp
-      write(22,*) 1.0
-        write(22,'(3f18.13)')a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
-        write(22,'(3f18.13)')a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
-        write(22,'(3f18.13)')a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
+      write(f_geom_org_data,'(i8)') ntemp
+      write(f_geom_org_data,*) 1.0
+      write(f_geom_org_data,'(3f18.13)')a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
+      write(f_geom_org_data,'(3f18.13)')a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
+      write(f_geom_org_data,'(3f18.13)')a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
 
 
-        write(18,'("1   1   1")') 
-      write(18,'(3f18.13)')a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
-        write(18,'(3f18.13)')a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
-        write(18,'(3f18.13)')a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
-      write(18,'(i8)') new_solid
+      write(f_new_ndm_scl,'("1   1   1")') 
+      write(f_new_ndm_scl,'(3f18.13)')a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
+      write(f_new_ndm_scl,'(3f18.13)')a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
+      write(f_new_ndm_scl,'(3f18.13)')a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
+      write(f_new_ndm_scl,'(i8)') new_solid
 
 
 
 10       format(I8,1X,D24.17,1X,D24.17,1X,D24.17,1X,I1,1X,I1,1X,I1)
-          write(13,*) 'number of atoms in the unit cell '
-          write(13,*) new_solid 
-          write(13,*) 'CELLDM= '
-          write(13,*)  CELLDM
-        write(13,*) 'position of the atoms in the unit cell'
+          write(f_unit_cell,*) 'number of atoms in the unit cell '
+          write(f_unit_cell,*) new_solid 
+          write(f_unit_cell,*) 'CELLDM= '
+          write(f_unit_cell,*)  CELLDM
+        write(f_unit_cell,*) 'position of the atoms in the unit cell'
 
 
 
-       write(12,'(i8)') new_solid
-       write(12,'(a)') ' '
-       write(11,'(i8)') new_solid
-       write(11,'(a)') ' '
-       write(19,'(i8)') gndatoms
-       write(19,'(a)') ' '
-       write(16,'(i8)') gndatoms
-       write(16,'(a)') ' '
-       write(20,'(i8)') gndatoms+ndatoms
-       write(20,'(a)') ' '
+       write(f_sia_xyz,'(i8)') new_solid
+       write(f_sia_xyz,'(a)') ' '
+       write(f_jsia_xyz,'(i8)') new_solid
+       write(f_jsia_xyz,'(a)') ' '
+       write(f_usia_xyz,'(i8)') gndatoms
+       write(f_usia_xyz,'(a)') ' '
+       write(f_jusia_xyz,'(i8)') gndatoms
+       write(f_jusia_xyz,'(a)') ' '
+       write(f_uvsia_xyz,'(i8)') gndatoms+ndatoms
+       write(f_uvsia_xyz,'(a)') ' '
 
-       write(21,'(i8)') gndatoms+ndatoms+ntemp
-       write(21,'(a)') ' '
+       write(f_uvbsia_xyz,'(i8)') gndatoms+ndatoms+ntemp
+       write(f_uvbsia_xyz,'(a)') ' '
 
 
 
@@ -422,22 +583,20 @@
        zmax=-1.d09
 
        do i=1,ntemp
-             x = rxb(i)*volc 
-             y = ryb(i)*volc 
-             z = rzb(i)*volc 
-        do is=1,ndatoms
-         if (i==nint(atoms_to_remove(is))) then
-         if (x .ge. xmax) xmax=x
-         if (y .ge. ymax) ymax=y       
-         if (z .ge. zmax) zmax=z
-         
-         if (x .le. xmin) xmin=x
-         if (y .le. ymin) ymin=y       
-         if (z .le. zmin) zmin=z
-         
-         endif
-      end do           
-        end do
+         x = rxb(i)*volc 
+         y = ryb(i)*volc 
+         z = rzb(i)*volc 
+         do is=1,ndatoms
+           if (i==nint(atoms_to_remove(is))) then
+             if (x .ge. xmax) xmax=x
+             if (y .ge. ymax) ymax=y       
+             if (z .ge. zmax) zmax=z
+             if (x .le. xmin) xmin=x
+             if (y .le. ymin) ymin=y       
+             if (z .le. zmin) zmin=z
+           endif
+         end do           
+       end do
 
 
        icnt2=0
@@ -470,9 +629,9 @@
          end if    
        end do
 
-       write(23,'(i8)') gndatoms+ndatoms+icnt2
-       write(24,'(i8)') gndatoms+ndatoms+icnt2
-       write(23,'(a)') ' '
+       write(f_uvbcsia_xyz,'(i8)') gndatoms+ndatoms+icnt2
+       write(f_uvbcsia_sim_xyz,'(i8)') gndatoms+ndatoms+icnt2
+       write(f_uvbcsia_xyz,'(a)') ' '
        !gndatoms - atoms in interstitial position - label  as Fe
  
        icnt=0       
@@ -481,20 +640,20 @@
          x = rx(i)*volc 
          y = ry(i)*volc 
          z = rz(i)*volc 
-        write(12,'("Fe  ",3f18.13)') x,y,z
-        write(11,'("Fe  ",3f18.13)') x,y,z
-        write(19,'("Fe  ",3f18.13)') x,y,z
-        write(16,'("Fe  ",3f18.13)') x,y,z
-        write(20,'("Fe  ",3f18.13)') x,y,z
-        write(21,'("Fe  ",3f18.13)') x,y,z
-        write(23,'("Fe  ",3f18.13)') x,y,z
-        write(24,'("Fe  ",3f18.13)') x,y,z
-        write(13,10) icnt,x,y,z,in,in,in
-        write(15,'(a3,3(f18.13))') 'Fe ', x,y,z
-        write(17,'(a3,3(f18.13))') '   ', x,y,z
+        write(f_sia_xyz,'("Fe  ",3f18.13)') x,y,z
+        write(f_jsia_xyz,'("Fe  ",3f18.13)') x,y,z
+        write(f_usia_xyz,'("Fe  ",3f18.13)') x,y,z
+        write(f_jusia_xyz,'("Fe  ",3f18.13)') x,y,z
+        write(f_uvsia_xyz,'("Fe  ",3f18.13)') x,y,z
+        write(f_uvbsia_xyz,'("Fe  ",3f18.13)') x,y,z
+        write(f_uvbcsia_xyz,'("Fe  ",3f18.13)') x,y,z
+        write(f_uvbcsia_sim_xyz,'("Fe  ",3f18.13)') x,y,z
+        write(f_unit_cell,10) icnt,x,y,z,in,in,in
+        write(f_formd_new_str,'(a3,3(f18.13))') 'Fe ', x,y,z
+        write(f_geom_new_data,'(a3,3(f18.13))') '   ', x,y,z
         xp(1:3)=(/  x, y, z/)
         xc(1:3) = MatMul(inv_at(1:3,1:3)/volc, xp(1:3))
-        write(18,'(a3,3(f18.13),"   1")') '   ', xc(1:3)
+        write(f_new_ndm_scl,'(a3,3(f18.13),"   1")') '   ', xc(1:3)
        end do
 
 
@@ -504,19 +663,19 @@
              x = rxb(i)*volc 
              y = ryb(i)*volc 
              z = rzb(i)*volc 
-            write(21,'("Cu  ",3f18.13)') x,y,z
+            write(f_uvbsia_xyz,'("Cu  ",3f18.13)') x,y,z
         do is=1,ndatoms
          if (i==nint(atoms_to_remove(is))) then
          
            if (atoms_to_remove_type(is).eq.70) then
-            write(20,'("He  ",3f18.13)') x,y,z
-            write(21,'("He  ",3f18.13)') x,y,z
-            write(23,'("He  ",3f18.13)') x,y,z
+            write(f_uvsia_xyz,'("He  ",3f18.13)') x,y,z
+            write(f_uvbsia_xyz,'("He  ",3f18.13)') x,y,z
+            write(f_uvbcsia_xyz,'("He  ",3f18.13)') x,y,z
          end if 
            if (atoms_to_remove_type(is).eq.71) then
-            write(20,'("H  ",3f18.13)') x,y,z
-            write(21,'("H  ",3f18.13)') x,y,z
-            write(23,'("H  ",3f18.13)') x,y,z
+            write(f_uvsia_xyz,'("H  ",3f18.13)') x,y,z
+            write(f_uvbsia_xyz,'("H  ",3f18.13)') x,y,z
+            write(f_uvbcsia_xyz,'("H  ",3f18.13)') x,y,z
          end if 
          endif
       end do           
@@ -535,16 +694,18 @@
        
        do is=1,nsia
          i=nsite(is)
-         write(22,'(a3,3(f18.13),"   1")')  '   ', rxb(i)*volc,ryb(i)*volc,rzb(i)*volc
-         icnt=icnt+1
-         write(12,'("Cu  ",3f12.5)') rxb(i)*volc,ryb(i)*volc,rzb(i)*volc       
-         write(11,'("Cu  ",3f12.5)') rxb(i)*volc,ryb(i)*volc,rzb(i)*volc       
-         write(13,10) icnt,rx(i)*volc,ry(i)*volc,rz(i)*volc,in,in,in
-         write(15,'(a3,3(f18.13))') 'Fe ', rxb(i)*volc,ryb(i)*volc,rzb(i)*volc
-         write(17,'(a3,3(f18.13))') '   ', rxb(i)*volc,ryb(i)*volc,rzb(i)*volc
-         xp(1:3)=(/ rxb(i),ryb(i),rzb(i) /)*volc
-         xc(1:3)=MatMul(inv_at(:,:)/volc,xp(:))
-         write(18,'(a3,3(f18.13),"   1")') '   ', xc(1:3)
+         if (i.ne.0) then
+           write(f_geom_org_data,'(a3,3(f18.13),"   1")')  '   ', rxb(i)*volc,ryb(i)*volc,rzb(i)*volc
+           icnt=icnt+1
+           write(f_sia_xyz,'("Cu  ",3f12.5)') rxb(i)*volc,ryb(i)*volc,rzb(i)*volc       
+           write(f_jsia_xyz,'("Cu  ",3f12.5)') rxb(i)*volc,ryb(i)*volc,rzb(i)*volc       
+           write(f_unit_cell,10) icnt,rx(i)*volc,ry(i)*volc,rz(i)*volc,in,in,in
+           write(f_formd_new_str,'(a3,3(f18.13))') 'Fe ', rxb(i)*volc,ryb(i)*volc,rzb(i)*volc
+           write(f_geom_new_data,'(a3,3(f18.13))') '   ', rxb(i)*volc,ryb(i)*volc,rzb(i)*volc
+           xp(1:3)=(/ rxb(i),ryb(i),rzb(i) /)*volc
+           xc(1:3)=MatMul(inv_at(:,:)/volc,xp(:))
+           write(f_new_ndm_scl,'(a3,3(f18.13),"   1")') '   ', xc(1:3)
+         end if 
        end do
 
 
@@ -556,6 +717,7 @@
         dist_ini=99999999.0
         do is=1,nsia
          it_a=nsite(is)
+         if (it_a==0) it_a=i
          dist_current=dsqrt((rx(i)-rxb(it_a))**2+(ry(i)-ryb(it_a))**2+(rz(i)-rzb(it_a))**2)
            if (dist_current < dist_ini) dist_ini=dist_current
     
@@ -563,16 +725,16 @@
         if (dist_ini  > 0.1) then
            !
             i_count=i_count+1
-            write(22,'(a3,3(f18.13),"   1")')  '   ', rx(i)*volc,ry(i)*volc,rz(i)*volc
+            write(f_geom_org_data,'(a3,3(f18.13),"   1")')  '   ', rx(i)*volc,ry(i)*volc,rz(i)*volc
             icnt=icnt+1
-            write(12,'("Cu  ",3f12.5)') rx(i)*volc,ry(i)*volc,rz(i)*volc       
-            write(11,'("Cu  ",3f12.5)') rx(i)*volc,ry(i)*volc,rz(i)*volc       
-            write(13,10) icnt,rx(i)*volc,ry(i)*volc,rz(i)*volc,in,in,in
-            write(15,'(a3,3(f18.13))') 'Fe ', rx(i)*volc,ry(i)*volc,rz(i)*volc
-            write(17,'(a3,3(f18.13))') '   ', rx(i)*volc,ry(i)*volc,rz(i)*volc
+            write(f_sia_xyz,'("Cu  ",3f12.5)') rx(i)*volc,ry(i)*volc,rz(i)*volc       
+            write(f_jsia_xyz,'("Cu  ",3f12.5)') rx(i)*volc,ry(i)*volc,rz(i)*volc       
+            write(f_unit_cell,10) icnt,rx(i)*volc,ry(i)*volc,rz(i)*volc,in,in,in
+            write(f_formd_new_str,'(a3,3(f18.13))') 'Fe ', rx(i)*volc,ry(i)*volc,rz(i)*volc
+            write(f_geom_new_data,'(a3,3(f18.13))') '   ', rx(i)*volc,ry(i)*volc,rz(i)*volc
              xp(1:3)=(/ rx(i),ry(i),rz(i) /)*volc
              xc(1:3)=MatMul(inv_at(:,:)/volc,xp(:))
-            write(18,'(a3,3(f18.13),"   1")') '   ', xc(1:3)
+            write(f_new_ndm_scl,'(a3,3(f18.13),"   1")') '   ', xc(1:3)
            !
         end if 
 
@@ -596,12 +758,12 @@
            if (x.lt.xmax) then
             if (y.lt.ymax) then      
              if (z.lt.zmax) then
-                write(23,'("Cu  ",3f18.13)') x,y,z
+                write(f_uvbcsia_xyz,'("Cu  ",3f18.13)') x,y,z
                 lremove=.false.
                 do is=1,ndatoms
                  if (i==nint(atoms_to_remove(is)))  lremove=.true.
               end do           
-                 if (.not.lremove) write(24,'("Cu  ",3f18.13)') x,y,z
+                 if (.not.lremove) write(f_uvbcsia_sim_xyz,'("Cu  ",3f18.13)') x,y,z
             
                 
 
@@ -622,22 +784,23 @@
        write(14,'(3f18.13)') a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
        write(14,'(3f18.13)') a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
        
-       write(19,*) ' '
-       write(19,'(3f12.5)') a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
-       write(19,'(3f12.5)') a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
-       write(19,'(3f12.5)') a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
+       write(f_usia_xyz,*) ' '
+       write(f_usia_xyz,'(3f12.5)') a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
+       write(f_usia_xyz,'(3f12.5)') a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
+       write(f_usia_xyz,'(3f12.5)') a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
 
-       write(12,*) ' '
-       write(12,'(3f12.5)') a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
-       write(12,'(3f12.5)') a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
-       write(12,'(3f12.5)') a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
+       write(f_sia_xyz,*) ' '
+       write(f_sia_xyz,'(3f12.5)') a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
+       write(f_sia_xyz,'(3f12.5)') a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
+       write(f_sia_xyz,'(3f12.5)') a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
 
       
 
 
-       close(12)
-       close(11)
-       close(13)
+       close(f_sia_xyz)
+       close(f_usia_xyz)
+       close(f_jsia_xyz)
+       close(f_unit_cell)
        close(14)
        
 
