@@ -15,7 +15,11 @@
        read(*,*) tsia
        if (.not.((tsia.eq.6).or.(tsia.eq.7)) )  then 
         write (*,*) 'tsia ......:', tsia, 'not implemented (yet)'
+<<<<<<< HEAD
 	stop  
+=======
+	stop   	
+>>>>>>> 4d65bdec83379d2a9586c2b4ae114e8a895e37a6
        end if 
        
        if (tsia.eq.6)  then

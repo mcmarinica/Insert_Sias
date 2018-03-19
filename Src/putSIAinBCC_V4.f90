@@ -272,7 +272,11 @@
 	  print*, 'there is a big problem in input'
 	  print*, 'Check check_site'
 	  print*, itst, nsia
+<<<<<<< HEAD
 	  stop 
+=======
+	  stop  	   	
+>>>>>>> 4d65bdec83379d2a9586c2b4ae114e8a895e37a6
 	end if	
 
 
@@ -321,7 +325,11 @@
 	  print*, 'there is a big problem in input'
 	  print*, 'Check check_site 3*'
 	  print*, itst, nsia
+<<<<<<< HEAD
 	  stop 
+=======
+	  stop  	   	
+>>>>>>> 4d65bdec83379d2a9586c2b4ae114e8a895e37a6
   	end if	
 	
 	end if  
