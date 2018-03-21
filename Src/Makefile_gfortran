@@ -33,17 +33,17 @@ LDFLAGS = $(F90FLAGS)
 	rm -f $%
 
 #all:	cut_vct.x put_vct.x put_vat.x put.x
-all:	cut_vct.x put_vct.x  put.x cube.x cube_shell.x read_write_n00.x
+#all:	cut_vct.x put_vct.x  put.x cube.x cube_shell.x read_write_n00.x
+all:	put_vct.x pre_put_vct.x cube.x cube_shell.x read_write_n00.x
 
-cut_vct.x:	$(BIN)/cut_vct.x
+#cut_vct.x:	$(BIN)/cut_vct.x
 put_vct.x:	$(BIN)/put_vct.x
-put_vat.x:	$(BIN)/put_vat.x
-put.x:	        $(BIN)/put.x
+pre_put_vct.x:	$(BIN)/pre_put_vct.x
+#put_vat.x:	$(BIN)/put_vat.x
+#put.x:	        $(BIN)/put.x
 cube.x:		$(BIN)/cube.x
 cube_shell.x:	$(BIN)/cube_shell.x
 read_write_n00.x:	$(BIN)/read_write_n00.x
-
-
 
 clean:
 	@rm -f *.o *.il *.mod $(MODULES)/*.mod libbabel.a $(BIN)/*.x
@@ -70,15 +70,16 @@ $(BIN)/cut_vct.x: libbabel.a cut_vct.o
 
 $(BIN)/put_vct.x: libbabel.a put_vct.o
 	$(LD) $(LDFLAGS) -o $(BIN)/put_vct.x put_vct.o libbabel.a $(LIBLOC)
-
-$(BIN)/put_vat.x: libbabel.a put_vat.o
-	$(LD) $(LDFLAGS) -o $(BIN)/put_vat.x put_vat.o libbabel.a $(LIBLOC)
-$(BIN)/put.x:  
-	$(F90)  module_pbc.f90 math.f90 lapack.f putSIAinBCC_V4.f90 -o $(BIN)/put.x  $(LIBLOC)
+#$(BIN)/put_vat.x: libbabel.a put_vat.o
+#	$(LD) $(LDFLAGS) -o $(BIN)/put_vat.x put_vat.o libbabel.a $(LIBLOC)
+#$(BIN)/put.x:  
+#	$(F90)  module_pbc.f90 math.f90 lapack.f putSIAinBCC_V4.f90 -o $(BIN)/put.x  $(LIBLOC)
 $(BIN)/cube.x:  
 	$(F90)  cubeFCCandBCC_v1.f -o $(BIN)/cube.x  $(LIBLOC)
 $(BIN)/cube_shell.x:  
 	$(F90)  cubeFCCandBCC_v3.f90 -o $(BIN)/cube_shell.x  $(LIBLOC)
 $(BIN)/read_write_n00.x:  
 	$(F90)  read_write_n00.f90 -o $(BIN)/read_write_n00.x  $(LIBLOC)
+$(BIN)/pre_put_vct.x:  
+	$(F90)  IVpre_putSIAinBCC_Vat_const.f90 -o $(BIN)/pre_put_vct.x  $(LIBLOC)
 

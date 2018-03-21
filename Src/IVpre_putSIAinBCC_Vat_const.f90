@@ -1001,7 +1001,7 @@
 	  n3MAX=  maxval(n3) 
 	  
 	  write(*,*) 'nsolid,a0',nsolid,a0
-	  write(*,*), 'a',a
+	  write(*,*) 'a',a
 	  print*, 'n1MAX,n2MAX,n3MAX',n1MAX,n2MAX,n3MAX 
        
        return
@@ -1075,7 +1075,7 @@
 	  print*, 'there is a big problem in input'
 	  print*, 'Check check_site'
 	  print*, itst, nsia
-	  stop	   	
+	  stop
 	end if	
 				
 	return
