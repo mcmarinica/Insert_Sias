@@ -405,7 +405,7 @@ end subroutine   care_check_site_migration
            print*, 'there is a big problem in input'
            print*, 'Check <check_site> 10*'
            print*, itst, nsia
-           stop          
+           !stop          
          end if
          end if 
 
