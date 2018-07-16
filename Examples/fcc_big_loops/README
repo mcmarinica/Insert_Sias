@@ -1,0 +1,23 @@
+1.
+
+generate the fcc solid using 
+../../Src/bin/cube.x
+with rthe canonic lattice parameter  2.8553
+2. 
+generate the inp file using  
+
+../../Src/bin/pre_put_vct.x
+
+the name in n00_new.inp
+
+3. 
+
+copy the previous  n00_new.inp file into no00.inp file 
+
+and generate the true structure using
+
+
+../../Src/bin/put_vct.x
+
+
+
