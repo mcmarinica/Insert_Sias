@@ -100,6 +100,7 @@
       if ((tsia.le.6).or.(tsia==21).or.(tsia==31).or.(tsia==67).or.(tsia==7)) then      
         !check inconsistencies 
         call read_config_sia (nsia,ns1,ns2,ns3,n1MAX,n2MAX,n3MAX)
+        if (tsia==7) call fix_ico_type (nsia,ns1,ns2,ns3,n1MAX,n2MAX,n3MAX)
         !some driver for dc model
         call analyze_config_sia (tsia,nsia,ns1,ns2,ns3,n1MAX,n2MAX,n3MAX)
 

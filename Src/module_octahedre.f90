@@ -106,9 +106,10 @@ contains
 module icosaedre
 
    implicit none
+   integer, dimension(:), allocatable :: type_icos
    real(8) :: pi=2.d0*acos(0.d0)
    real(8) :: deg2rad=2.d0*acos(0.d0)/180.d0
-
+   real(8), dimension(3)  :: t_dir
 
    type icosah 
    real(8) :: center(3)    ! center of the octhaedre
@@ -134,12 +135,12 @@ contains
    
    !the other 8 atoms which must be removed (each one one face):
 
-   icos(1)%removeatom(1:3,1)=(/ -1,  0,   0 /) !011
-   icos(1)%removeatom(1:3,2)=(/  1,  0,   0 /) !211
-   icos(1)%removeatom(1:3,3)=(/  0,  0,  -1 /) !110
-   icos(1)%removeatom(1:3,4)=(/  0,  0,   1 /) !112
-   icos(1)%removeatom(1:3,5)=(/  0, -1,   0 /) !101
-   icos(1)%removeatom(1:3,6)=(/  0,  1,   0 /) !121
+   icos(1)%removeatom(1:3,1)=(/ -1.d0,  0.d0,   0.d0 /) !011
+   icos(1)%removeatom(1:3,2)=(/  1.d0,  0.d0,   0.d0 /) !211
+   icos(1)%removeatom(1:3,3)=(/  0.d0,  0.d0,  -1.d0 /) !110
+   icos(1)%removeatom(1:3,4)=(/  0.d0,  0.d0,   1.d0 /) !112
+   icos(1)%removeatom(1:3,5)=(/  0.d0, -1.d0,   0.d0 /) !101
+   icos(1)%removeatom(1:3,6)=(/  0.d0,  1.d0,   0.d0 /) !121
    
 
    !atom in the center 
@@ -167,6 +168,22 @@ contains
 
 
 
+   !atom in the center 
+   icos(2)%add(1:3,1)=(/  0.0, 0.0,   0.0 /)  !111
+   t_dir=(/ 1.d0/dsqrt(3.d0),  1.d0/dsqrt(3.d0), 1.d0/dsqrt(3.d0) /)
+   do i=1,6
+      vec_temp_in(1:3)=icos(1)%removeatom(1:3,i)
+      !debug write(*,*) 'octo',vec_temp_in
+       call rotation_vector_t(60*deg2rad,t_dir, vec_temp_in,vec_temp_out)
+       write(*,*) 'icos',vec_temp_in, 't', vec_temp_out
+      icos(2)%removeatom(1:3,i)=vec_temp_out(1:3)
+   end do      
+
+   do j=1,12
+     vec_temp_in(1:3)=icos(1)%sia(1:3,j)
+     call rotation_vector_t(60*deg2rad,t_dir, vec_temp_in,vec_temp_out)
+     icos(2)%sia(1:3,j)=vec_temp_out(1:3)       
+   end do
 
   return
   end  subroutine init_icos

@@ -1,6 +1,30 @@
 !#####################################################################
           
   
+!#####################################################################       
+   subroutine fix_ico_type (nsia,ns1,ns2,ns3,n1MAX,n2MAX,n3MAX)
+   use icosaedre, only:  type_icos
+   integer  :: nsia, n1MAX,n2MAX,n3MAX,i  
+   integer  :: ns1(nsia),ns2(nsia),ns3(nsia), i1,i2,i3
+        
+   if (allocated(type_icos)) deallocate(type_icos);  allocate (type_icos(nsia))
+      do i=1,nsia
+
+        i1 =  mod(ns1(i),2)
+        i2 =  mod(ns2(i),2)
+        i3 =  mod(ns3(i),2)
+
+        if (i1==0) type_icos(i)=2
+        if (i1==1) type_icos(i)=1
+
+        if ((i1 /= i2) .or. (i1/= i3)) then 
+            write(*,*) 'sia site ', i, 'all the line should have the same parity'
+            write(*,*) 'ns1, ns2, ns3', ns1(i),ns2(i), ns3(i)
+            stop
+        end if          
+      end do 
+   return
+   end 
   subroutine read_config_sia_octa (nsia,type_octa,  &
                     ns1,ns2,ns3,n1MAX,n2MAX,n3MAX)
   
@@ -234,7 +258,7 @@ a02=a0/2.d0
 alpha=1.0d0
 icnt=0
 do i=1,nsia
-  it_icos=1
+it_icos=type_icos(i)
   origin(1:3)=(/ ns1(i),  ns2(i), ns3(i) /)   
     do jj=1,12 !loop over the three atoms located in the corner of the tetrahedron
        icnt=icnt+1
@@ -244,7 +268,7 @@ do i=1,nsia
        offlattice_no_order(icnt)=rxgaos(icnt)**3+10*rygaos(icnt)**3+100*rzgaos(icnt)**3
        write(*,'("ig", i6,f20.7,3f18.6)') icnt, offlattice_no_order(icnt), rxgaos(icnt), rygaos(icnt), rzgaos(icnt) 
    end do
-
+   !if (it_icos ==  1) then
      do jj=1,1 !loop over the three atoms located in the corner of the tetrahedron
        icnt=icnt+1
        rxgaos(icnt)=a02*(alpha*icos(it_icos)%add(1,jj)+ origin(1))
@@ -253,6 +277,8 @@ do i=1,nsia
        offlattice_no_order(icnt)=rxgaos(icnt)**3+10*rygaos(icnt)**3+100*rzgaos(icnt)**3
        write(*,'("ig", i6,f20.7,3f18.6)') icnt, offlattice_no_order(icnt), rxgaos(icnt), rygaos(icnt), rzgaos(icnt) 
      end do
+   !end if 
+
 end do 
    
  natoms_extra=icnt
@@ -541,6 +567,13 @@ end do
       write(f_geom_org_data,'(3f18.13)')a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
 
 
+   write(42,'("1   1   1")') 
+   write(42,'(3f18.13)')a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
+   write(42,'(3f18.13)')a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
+   write(42,'(3f18.13)')a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
+   write(42,'(i8)') ntemp
+
+
       write(f_new_ndm_scl,'("1   1   1")') 
       write(f_new_ndm_scl,'(3f18.13)')a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
       write(f_new_ndm_scl,'(3f18.13)')a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
@@ -600,7 +633,7 @@ end do
 
 
        icnt2=0
-       delta=+0.1
+       delta=+0.2
        xmin=xmin-delta
        ymin=ymin-delta
        zmin=zmin-delta
