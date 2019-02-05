@@ -7,7 +7,7 @@
        use the_100_smooth
        implicit none
        
-       real(8), parameter :: a0=2.8553,as110=2.05d0,as111=1.60d0,as100=1.70d0
+       real(8), parameter :: a0=2.8553,as110=2.05d0,as111=1.90d0,as100=1.70d0
        integer,dimension(:), allocatable :: n1,n2,n3,type_octa
        real(8) ,dimension(:),allocatable :: rx,ry,rz,rxb,ryb,rzb
        integer,dimension(:),allocatable :: ns1,ns2,ns3,nsite,   &
