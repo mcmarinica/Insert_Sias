@@ -71,11 +71,11 @@
       do i=1,nsia
        read (11,*) ns1(i),ns2(i),ns3(i)
        !write(*,*) 'ns11',ns1(i),ns2(i),ns3(i)
-        if ( (ns1(i) > n1MAX) .or.(ns2(i) > n2MAX) .or. &
-          (ns3(i) > n3MAX) ) then
+        if ( (ns1(i) > n1MAX+1) .or.(ns2(i) > n2MAX+1) .or. &
+          (ns3(i) > n3MAX+1) ) then
         print*, 'Big problem in read_config_sia'
         print*, 'The cell is not big enough. Increase the size!'
-        print*, '<read_config_sia>'
+        print*, '<read_config_sia>', n1MAX+1, n2MAX+1, n3MAX+1
         stop
         end if          
       end do 
@@ -94,11 +94,11 @@
       do i=1,nsia
        read (11,*) ns1(i),ns2(i),ns3(i),type_migration(i)
        !write(*,*) 'ns11',ns1(i),ns2(i),ns3(i)
-        if ( (ns1(i) > n1MAX) .or.(ns2(i) > n2MAX) .or. &
-          (ns3(i) > n3MAX) ) then
+        if ( (ns1(i) > n1MAX+1) .or.(ns2(i) > n2MAX+1) .or. &
+          (ns3(i) > n3MAX+1) ) then
         print*, 'Big problem in read_config_sia'
         print*, 'The cell is not big enough. Increase the size!'
-        print*, '<read_config_sia>'
+        print*, '<read_config_sia_migration>'
         stop
         end if
         if (.not.((type_migration(i)==0).or.(type_migration(i)==1))) then
@@ -240,7 +240,7 @@ end if
     n2pbc=n2MAX+1
     n3pbc=n3MAX+1
     
-    print*, n1MAX,n2MAX,n3MAX
+    print*, 'n1MAX,n2MAX,n3MAX',n1MAX,n2MAX,n3MAX
 
     call gcd (n1pbc,n2pbc,itemp)
     call gcd (itemp,n3pbc,ngcd)

@@ -8,7 +8,7 @@
 cat > cube.inp <<EOF
 2
 2.8553
-4 4 4 
+8 8 8
 EOF
 
 ../../Src/bin/cube.x < cube.inp
@@ -18,14 +18,14 @@ EOF
 #How many SIAs and in which lattice site.: here 1 SIA at (2,2,2) center inb a0/2 units
 cat > no00.inp <<EOF
 1
-2 2 2
+1 1 1
 EOF
 
 
 
 # the type of 110 SIA is option 1:
 cat > put.inp <<EOF
-1
+4
 EOF
 
 
