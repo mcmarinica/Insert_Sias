@@ -25,7 +25,7 @@ EOF
 
 # the type of 110 SIA is option 1:
 cat > put.inp <<EOF
-4
+1
 EOF
 
 
