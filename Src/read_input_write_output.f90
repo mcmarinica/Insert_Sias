@@ -11,6 +11,7 @@
 !#####################################################################
 
    subroutine read_nsia (nsia,tsia)
+   use icosaedre, only: nsia_ico, nsia_dumbell
    use migration_sia
    integer :: nsia,tsia
 
@@ -26,8 +27,11 @@
    else
 
     open (11,file='no00.inp',form='formatted',status='unknown')
-    read (11,*) nsia
-
+    if (tsia==77) then
+       read (11,*) nsia_ico, nsia_dumbell
+     else
+       read (11,*) nsia
+    end if
    end if
 
    return
@@ -256,6 +260,7 @@ end if
 
 
    subroutine read_sia(tsia,as110,as111,as100,rsx,rsy,rsz,rgx,rgy,rgz)
+   use icosaedre, only: rdumb
    implicit none
    double precision     :: rsx(2),rsy(2),rsz(2),as110,as111,as100
    double precision     :: rgx(6), rgy(6), rgz(6)
@@ -290,18 +295,52 @@ end if
     rsy(1)= - cos01 * cos45 *  as2 ! -2.8553/6.0
     rsz(1)= - cos01 * cos45 *  as2 ! -2.8553/6.0
 
-    rsx(2)= cos01 * cos45 *  as2+ 2.8553/3.0
+    rsx(2)= cos01 * cos45 *  as2 + 2.8553/3.0
     rsy(2)= cos01 * cos45 *  as2  -2.8553/6.0
     rsz(2)= cos01 * cos45 *  as2  -2.8553/6.0
 
-   else if ((tsia==3).or.(tsia==31)) then
-      rsx(1)= 0.d0
-    rsy(1)= 0.d0
-    rsz(1)= -as100/2.d0
+  else if ((tsia==3).or.(tsia==31).or.(tsia==310)) then
 
-    rsx(2)= 0.d0
-    rsy(2)= 0.d0
-    rsz(2)= as100/2.d0
+      rsx(1)= 0.d0
+      rsy(1)= 0.d0
+      rsz(1)= -as100/2.d0
+
+      rsx(2)= 0.d0
+      rsy(2)= 0.d0
+      rsz(2)= as100/2.d0
+
+  else if (tsia==77) then
+      !rdumb(i,jk,)
+      ! i - 1st atom of the dumbell
+      ! j - x,y,z of the dumbell
+      ! k - the type of the dumbell
+      rdumb(1,1,3)= 0.d0
+      rdumb(1,2,3)= 0.d0
+      rdumb(1,3,3)= -as100/2.d0
+
+      rdumb(2,1,3)= 0.d0
+      rdumb(2,2,3)= 0.d0
+      rdumb(2,3,3)= as100/2.d0
+
+
+      rdumb(1,1,2)= 0.d0
+      rdumb(1,2,2)= -as100/2.d0
+      rdumb(1,3,2)=0.d0
+
+      rdumb(2,1,2)= 0.d0
+      rdumb(2,2,2)= as100/2.d0
+      rdumb(2,3,2)= 0.d0
+
+
+      rdumb(1,1,1)= -as100/2.d0
+      rdumb(1,2,1)= 0.d0
+      rdumb(1,3,1)= 0.d0
+
+      rdumb(2,1,1)= as100/2.d0
+      rdumb(2,2,1)= 0.d0
+      rdumb(2,3,1)= 0.d0
+
+
     else if (tsia==4) then
 
     open (23,file='gao_unit.in',form='formatted' )

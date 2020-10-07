@@ -7,20 +7,25 @@
        use the_100_smooth
        implicit none
 
-       !old real(8), parameter :: a0=2.8553,as110=2.05d0,as111=1.90d0,as100=1.70d0
-       real(8), parameter :: a0=2.8553,as110=1.55d0,as111=1.550d0,as100=1.550d0
+        real(8), parameter :: a0=2.8553,as110=2.05d0,as111=1.90d0,as100=1.70d0
+       !fcc real(8), parameter :: a0=2.8553,as110=1.55d0,as111=1.550d0,as100=1.550d0
        integer,dimension(:), allocatable :: n1,n2,n3,type_octa
        real(8) ,dimension(:),allocatable :: rx,ry,rz,rxb,ryb,rzb
        integer,dimension(:),allocatable :: ns1,ns2,ns3,nsite,   &
+                                           nd1, nd2, nd3, &
                                            indx,nsite_octa_vac_remove,nsite_octa_vac_remove_type, &
                                             atoms_to_remove_type,isite_surface,isite_surfaceb
        real(8),dimension(:),allocatable :: list_no_order,atoms_to_remove,offlattice_no_order,&
                                            rxgaos,rygaos,rzgaos,temprxgaos,temprygaos,temprzgaos
        integer,dimension(:,:),allocatable :: nsite_m
+
+       integer,dimension(:),allocatable :: buffer_atoms
+       real(8),dimension(:),allocatable :: buffer_rx ,buffer_ry, buffer_rz
+
        double precision     :: rsx(2),rsy(2),rsz(2)
        double precision     :: rgx(6),rgy(6),rgz(6)
        real(8), dimension(3,3) :: a, amat, inv_amat,abase, inv_abase
-       integer :: tsia
+       integer :: tsia, old_size
        integer :: nsia,nsia_a,ntemp,nall,nsize
        integer :: is_tot, is_totb, i,j,pdist, izcoordinate, n1MAX,n2MAX,n3MAX,ndatoms,gndatoms,new_solid,nlac_remove,natoms_extra
        real(8)  :: volc
@@ -48,8 +53,12 @@
          nall=ntemp + 2*nsia_a ! I do not understand. ilogical
         else if (tsia.eq.7) then
          call init_icos
-         nsia_a=13*nsia   ! one in center and 6 dumbells i.e. 12 off_latice atoms
-         nall = ntemp+nsia_a! I do nor understand, ilogical
+         nsia_a=13*nsia       ! one in center and 6 dumbells i.e. 12 off_latice atoms
+         nall = ntemp+nsia_a  ! I do not  understand, ilogical
+        else if (tsia.eq.77) then
+         call init_icos
+         nsia_a=13*nsia_ico + 2*nsia_dumbell     ! one in center and 6 dumbells i.e. 12 off_latice atoms
+         nall = ntemp+nsia_a                     ! I do not  understand, ilogical
        else
          nsia_a=nsia
          nall  =ntemp+nsia
@@ -65,14 +74,24 @@
        allocate ( n1(nsize),  n2(nsize),  n3(nsize),                  &
                   rx(nsize),  ry(nsize), rz(nsize),                   &
                   rxb(nsize),  ryb(nsize), rzb(nsize),                &
-                  ns1(nsia),ns2(nsia),ns3(nsia),nsite(nsia),          &
+                  isite_surfaceb(nsize), isite_surface(nsize))
+        if (tsia/=77) then
+        allocate (ns1(nsia),ns2(nsia),ns3(nsia),nsite(nsia),          &
                   nsite_m(4,nsia),nsite_octa_vac_remove(10*nsia),     &
                   nsite_octa_vac_remove_type(10*nsia),type_octa(nsia),&
                   indx(10*nsia), list_no_order(10*nsia),              &
                   offlattice_no_order(12*nsia), temprxgaos(12*nsia),  &
-                  temprygaos(12*nsia),temprzgaos(12*nsia),            &
-                  isite_surfaceb(nsize), isite_surface(nsize))
+                  temprygaos(12*nsia),temprzgaos(12*nsia))
+        else
 
+        allocate (ns1(nsia_ico),ns2(nsia_ico),ns3(nsia_ico),nsite(nsia_ico),          &
+                  nsite_m(4,nsia_ico),nsite_octa_vac_remove(10*nsia_ico),     &
+                  nsite_octa_vac_remove_type(10*nsia_ico),type_octa(nsia_ico),&
+                  indx(10*nsia_ico), list_no_order(10*nsia_ico),              &
+                  offlattice_no_order(12*nsia_ico), temprxgaos(12*nsia_ico),  &
+                  temprygaos(12*nsia_ico),temprzgaos(12*nsia_ico))
+          allocate(nd1(nsia_dumbell), nd2(nsia_dumbell), nd3(nsia_dumbell), type_dumb(nsia_dumbell))
+        end if
        !we read the input cell of the perfect bulk ...return rx,ry, zy and the box at (through pbc module)
        call read_input(ntemp,nsize,a,rx,ry,rz)
 
@@ -98,12 +117,21 @@
 
        ! the the integer coordinates of the site where the inst must
        ! be put
-      if ((tsia.le.6).or.(tsia==21).or.(tsia==31).or.(tsia==67).or.(tsia==7).or.(tsia==210)) then
+      if ((tsia.le.6).or.(tsia==21).or.(tsia==31).or.(tsia==67).or.(tsia==7).or.(tsia==77).or.(tsia==210)) then
         !check inconsistencies
-        call read_config_sia (nsia,ns1,ns2,ns3,n1MAX,n2MAX,n3MAX)
+        if (tsia==77) then
+            call read_config_sia (nsia_ico,ns1,ns2,ns3,n1MAX,n2MAX,n3MAX)
+        else
+            call read_config_sia (nsia,ns1,ns2,ns3,n1MAX,n2MAX,n3MAX)
+        end if
+        write(*,*) 'debug 1', nsia_ico
         if (tsia==7) call fix_ico_type (nsia,ns1,ns2,ns3,n1MAX,n2MAX,n3MAX)
+        if (tsia==77) call fix_ico_type_mixed (nsia,ns1,ns2,ns3,n1MAX,n2MAX,n3MAX)
+        write(*,*) 'debug 2', nsia_ico
         !some driver for dc model
+        if (tsia/=77) then
         call analyze_config_sia (tsia,nsia,ns1,ns2,ns3,n1MAX,n2MAX,n3MAX)
+        end if
 
         if (tsia==21) call fill_the_111 (a0,as111,rsx,rsy,rsz)
         if (tsia==31) call fill_the_100 (a0,as100,rsx,rsy,rsz)
@@ -123,6 +151,12 @@
           call read_config_sia_octa (nsia,type_octa,ns1,ns2,ns3,n1MAX,n2MAX,n3MAX)
         end if
       end if
+
+      if (tsia==77) then
+          !read the type_octa.useful for C15 case because, there are, two orientations and consequently two type of octa
+          call read_config_sia_ico (nsia_dumbell,nd1,nd2,nd3)
+      end if
+      write(*,*) 'debug 3', nsia_dumbell
 
 
       if ((tsia==22).or.(tsia==221)) then
@@ -148,8 +182,13 @@
          call  build_the_nsite_the_111_migration (nsia,ns1,ns2,ns3,n1MAX,n2MAX,n3MAX)
       end if
       !check site and many more
+      if (tsia==77) then
+      call check_site (tsia,ntemp,nsize,nsia_ico,nlac_remove,n1,n2,n3,ns1,ns2,ns3,&
+                        nsite,nsite_m,nsite_octa_vac_remove,nsite_octa_vac_remove_type,type_octa)
+      else
       call check_site (tsia,ntemp,nsize,nsia,nlac_remove,n1,n2,n3,ns1,ns2,ns3,&
                         nsite,nsite_m,nsite_octa_vac_remove,nsite_octa_vac_remove_type,type_octa)
+      end if
       if ((tsia==22).or.(tsia==221)) then
          call check_site_migration (ntemp,nsize,nsia,n1,n2,n3,ns1,ns2,ns3)
            if (tsia==221) then
@@ -186,7 +225,7 @@
        else if (tsia.eq.5) then
          volc=1.d0
          call write_out_vv (nall,ntemp,nsia,nsize,volc,nsite,rx,ry,rz,a)
-       else if ((tsia==7).or.(tsia.eq.6).or.(tsia==67)) then
+       else if ((tsia==7).or.(tsia==77).or.(tsia.eq.6).or.(tsia==67)) then
          write(*,*) 'ntemp',ntemp
          write(*,*) 'nsia',nsia
          write(*,*) 'nsize',nsize
@@ -198,11 +237,17 @@
          ! redifine the atoms that should be removed. In the case that are
          ! atoms_to_be_removed double defined (e.g. in the case
          ! this subroutine will define ndatoms the atoms that will be removed
+         if (tsia/=77) then
          call  lattice_compute_different_removeatoms (nsia, nlac_remove,nsite_octa_vac_remove,indx,list_no_order,ndatoms)
+         else
+         call  lattice_compute_different_removeatoms (nsia_ico, nlac_remove,nsite_octa_vac_remove,indx,list_no_order,ndatoms)
+         end if
+         write(*,*) 'debug 4', ndatoms
          !the atoms that should be removed are packed into atoms_to_remove vector
          allocate (atoms_to_remove(ndatoms),atoms_to_remove_type(ndatoms))
          call  lattice_compute_atoms_to_remove(atoms_to_remove,atoms_to_remove_type,ndatoms, &
               nlac_remove,list_no_order,nsite_octa_vac_remove_type,indx)
+         write(*,*) 'debug 5', ndatoms
          if ((tsia.eq.6) .or. (tsia.eq.67)) then
            call  offlattice_get_coordinates_and_order(a0,temprxgaos,temprygaos,temprzgaos,&
                                                     rx,    ry,    rz,    &
@@ -228,23 +273,95 @@
            call ico_offlattice_compute_atoms_to_remove(gndatoms,rxgaos,rygaos,rzgaos,temprxgaos,temprygaos,temprzgaos,&
                             offlattice_no_order,indx,nsia,natoms_extra)
 
+         else if (tsia.eq.77) then
+           if (allocated(indx)) deallocate(indx)             ; allocate(indx(13*nsia_ico))
+           if (allocated(offlattice_no_order)) deallocate(offlattice_no_order) ; allocate(offlattice_no_order(13*nsia_ico))
+           if (allocated(temprxgaos)) deallocate(temprxgaos) ; allocate(temprxgaos(13*nsia_ico))
+           if (allocated(temprygaos)) deallocate(temprygaos) ; allocate(temprygaos(13*nsia_ico))
+           if (allocated(temprzgaos)) deallocate(temprzgaos) ; allocate(temprzgaos(13*nsia_ico))
+
+           call  ico_offlattice_get_coordinates_and_order(a0,temprxgaos,temprygaos,temprzgaos,&
+                                        rx, ry, rz, ns1, ns2, ns3,   &
+                     offlattice_no_order,indx,nsite,type_octa,nsia_ico,nsize,gndatoms,natoms_extra)
+
+           allocate (rxgaos(gndatoms),rygaos(gndatoms),rzgaos(gndatoms))
+           call ico_offlattice_compute_atoms_to_remove(gndatoms,rxgaos,rygaos,rzgaos,temprxgaos,temprygaos,temprzgaos,&
+                            offlattice_no_order,indx,nsia_ico,natoms_extra)
+
 
          end if
-
 
          write(*,*)'ntemp - original bulk.....................:', ntemp
          write(*,*)'gndatoms - offlatice to be inserted.......:', gndatoms
          write(*,*)'ndatoms  - atoms to be removed ...........:', ndatoms
          write(*,*)'nsize - allocate dimension for rx.........:', nsize
+         if (tsia==77) then
+            nsia = nsia_ico
+            if (nsia_dumbell > 0)  then
+                call dumbell_ico(rx,ry,rz, size(rxb), nd1,nd2,nd3,size(nd1), a0/2.d0)
 
-         call write_coordinates (ntemp,nsize,new_solid,rxgaos,rygaos,rzgaos,gndatoms,atoms_to_remove,ndatoms,&
+                ! redefinition of atoms_to_remove ...
+                if (allocated(buffer_atoms)) deallocate(buffer_atoms) ; allocate(buffer_atoms(size(atoms_to_remove)))
+                old_size = size(atoms_to_remove)
+                if (old_size /= ndatoms) then
+                   write(*,*) 'problem in counting the middle of SIAs'
+                   stop
+                end if
+                buffer_atoms = atoms_to_remove
+                if (allocated(atoms_to_remove)) deallocate(atoms_to_remove) ; allocate(atoms_to_remove(ndatoms+nsia_dumbell))
+                atoms_to_remove(1:old_size) = buffer_atoms(1:old_size)
+                atoms_to_remove(old_size+1:ndatoms+nsia_dumbell_real_ico) = nsite_dumb_remove(1:nsia_dumbell_real_ico)
+                ! redefinition of the rxgaos,rygaos,rzgaos
+                old_size = size(rxgaos)
+                if (allocated(buffer_rx)) deallocate(buffer_rx) ; allocate(buffer_rx(old_size))
+                if (allocated(buffer_ry)) deallocate(buffer_ry) ; allocate(buffer_ry(old_size))
+                if (allocated(buffer_rz)) deallocate(buffer_rz) ; allocate(buffer_rz(old_size))
+                buffer_rx = rxgaos
+                buffer_ry = rygaos
+                buffer_rz = rzgaos
+                !allocate (rxgaos(gndatoms),rygaos(gndatoms),rzgaos(gndatoms))
+                if (allocated(rxgaos)) deallocate(rxgaos) ; allocate(rxgaos(gndatoms + 2*nsia_dumbell_real_ico + nsia_center_real_ico))
+                if (allocated(rygaos)) deallocate(rygaos) ; allocate(rygaos(gndatoms + 2*nsia_dumbell_real_ico + nsia_center_real_ico))
+                if (allocated(rzgaos)) deallocate(rzgaos) ; allocate(rzgaos(gndatoms + 2*nsia_dumbell_real_ico + nsia_center_real_ico))
+
+                rxgaos(1:gndatoms) = buffer_rx(1:gndatoms)
+                rygaos(1:gndatoms) = buffer_ry(1:gndatoms)
+                rzgaos(1:gndatoms) = buffer_rz(1:gndatoms)
+
+                rxgaos(gndatoms+1:gndatoms+2*nsia_dumbell_real_ico + nsia_center_real_ico) = r_extra_ico(1,1:2*nsia_dumbell_real_ico + nsia_center_real_ico)
+                rygaos(gndatoms+1:gndatoms+2*nsia_dumbell_real_ico + nsia_center_real_ico) = r_extra_ico(2,1:2*nsia_dumbell_real_ico + nsia_center_real_ico)
+                rzgaos(gndatoms+1:gndatoms+2*nsia_dumbell_real_ico + nsia_center_real_ico) = r_extra_ico(3,1:2*nsia_dumbell_real_ico + nsia_center_real_ico)
+
+               gndatoms = gndatoms + 2*nsia_dumbell_real_ico + nsia_center_real_ico
+               ndatoms  = ndatoms + nsia_dumbell_real_ico
+               !new_solid = new_solid +  nsia_dumbell_real_ico + nsia_center_real_ico
+               ntemp = ntemp
+               nall = nall
+
+                call write_coordinates (ntemp,nsize,new_solid,rxgaos,rygaos,rzgaos,gndatoms,atoms_to_remove,ndatoms,&
                               rx,ry,rz)
+
+                write(*,*) 'after  ....:  nall,ntemp,new_solid,gndatoms, ndatoms',  nall,ntemp,new_solid,gndatoms, ndatoms
+                 if  (new_solid /= (ntemp + nsia_dumbell_real_ico + nsia_center_real_ico) ) then
+                     write (*,*) 'big problem after counting atoms ....'
+                 end if
+            end if
+         else
+            call write_coordinates (ntemp,nsize,new_solid,rxgaos,rygaos,rzgaos,gndatoms,atoms_to_remove,ndatoms,&
+                              rx,ry,rz)
+
+         end if
 
          write(*,*)'new_solid.................................:', new_solid
          volc= (dble(new_solid)/dble(ntemp))**(1.d0/3.d0)
          volc=1.d0
          write(*,*)'The no of defects SIAs ...................:', -ndatoms+gndatoms
+        if (tsia==77) then
 
+         !reallocate atoms_to_remove
+
+
+        endif
 
         call  write_out_octa (nall,ntemp,new_solid,gndatoms,volc,a0,rx,  &
                        ry,rz,rxb,ryb,rzb,a,ndatoms,atoms_to_remove,      &
