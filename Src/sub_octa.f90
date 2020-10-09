@@ -320,7 +320,7 @@ it_icos=type_icos(i)
        rygaos(icnt)=a02*(alpha*icos(it_icos)%sia(2,jj)+ origin(2))
        rzgaos(icnt)=a02*(alpha*icos(it_icos)%sia(3,jj)+ origin(3))
        offlattice_no_order(icnt)=rxgaos(icnt)**3+10*rygaos(icnt)**3+100*rzgaos(icnt)**3
-       write(*,'("ig", i6,f20.7,3f18.6)') icnt, offlattice_no_order(icnt), rxgaos(icnt), rygaos(icnt), rzgaos(icnt)
+       !debug write(*,'("ig", i6,f20.7,3f18.6)') icnt, offlattice_no_order(icnt), rxgaos(icnt), rygaos(icnt), rzgaos(icnt)
    end do
    !if (it_icos ==  1) then
      do jj=1,1 !loop over the three atoms located in the corner of the tetrahedron
@@ -346,7 +346,7 @@ end do
 
  do jj=1,natoms_extra
    ii=indx(jj)
-   write(*,'("gg", i6,f20.7,3f18.6)') ii, offlattice_no_order(ii), rxgaos(ii), rygaos(ii), rzgaos(ii)
+   !debug write(*,'("gg", i6,f20.7,3f18.6)') ii, offlattice_no_order(ii), rxgaos(ii), rygaos(ii), rzgaos(ii)
  end do
 
  i_double=0
@@ -400,7 +400,7 @@ do    i=1,natoms_extra-1
 end do
 
 do i=1,icnt
-write(*,*) 'gaos', i, rxgaos(i), rygaos(i),rzgaos(i)
+!debug write(*,*) 'gaos', i, rxgaos(i), rygaos(i),rzgaos(i)
 end do
   write(*,'("II Final number of removed GAOS  .: ",i6)') i_double
 return
@@ -472,6 +472,7 @@ rztemp(:)=99999999.d0
 !debug write(*,*) 'write_coordinates  ntemp, ndatoms, gndatoms :', ntemp, ndatoms, gndatoms
 
 !writting the SIAs in 77 file
+
 do i=1,gndatoms
   icnt=icnt+1
   rxtemp(icnt)=rxgaos(i)
@@ -501,7 +502,7 @@ do i=1,ntemp
     rztemp(icnt)=rz(i)
   end if
 end do
-
+  write(*,*) 'toto', i1, i2, ndatoms, gndatoms
   if (icnt.gt.nsize) then
    write(*,*) '<write_cordinates> Vector size not correct...icnt vs nsize:',icnt,nsize
    write(*,*) '<write_cordinates> icnt should be lower than nsize:',icnt,nsize
@@ -534,7 +535,7 @@ do i=1,nsia_dumbell
 end do
    if (allocated(r_extra_ico)) deallocate(r_extra_ico) ; allocate(r_extra_ico(3,icount))
    if (allocated(nsite_dumb_remove)) deallocate(nsite_dumb_remove) ; allocate(nsite_dumb_remove(nsia_dumbell))
-
+   nsite_dumb_remove(:)=99999999
 
 
 icount=0
@@ -548,10 +549,15 @@ do ir= 1, size(rxb)
         end if
       end do
 end do
+
+!do ir=1, size(nsite_dumb_remove)
+!   write(*,*) 'rrr', ir, nsite_dumb_remove(ir)
+!end do
+
 nsia_dumbell_real_ico = icount
 nsia_center_real_ico = size(nd1) - icount
 
-write (*,*) nsia_dumbell_real_ico, nsia_center_real_ico
+!write (*,*) nsia_dumbell_real_ico, nsia_center_real_ico
 
 if (icount > size(nd1)) then
    write(*,*) 'HUge problem: icount > nd1. icount = the number of dumbbles , b   '

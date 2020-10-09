@@ -310,7 +310,7 @@
                 buffer_atoms = atoms_to_remove
                 if (allocated(atoms_to_remove)) deallocate(atoms_to_remove) ; allocate(atoms_to_remove(ndatoms+nsia_dumbell))
                 atoms_to_remove(1:old_size) = buffer_atoms(1:old_size)
-                atoms_to_remove(old_size+1:ndatoms+nsia_dumbell_real_ico) = nsite_dumb_remove(1:nsia_dumbell_real_ico)
+                atoms_to_remove(old_size+1:ndatoms+nsia_dumbell) = nsite_dumb_remove(1:nsia_dumbell)
                 ! redefinition of the rxgaos,rygaos,rzgaos
                 old_size = size(rxgaos)
                 if (allocated(buffer_rx)) deallocate(buffer_rx) ; allocate(buffer_rx(old_size))
@@ -333,7 +333,7 @@
                 rzgaos(gndatoms+1:gndatoms+2*nsia_dumbell_real_ico + nsia_center_real_ico) = r_extra_ico(3,1:2*nsia_dumbell_real_ico + nsia_center_real_ico)
 
                gndatoms = gndatoms + 2*nsia_dumbell_real_ico + nsia_center_real_ico
-               ndatoms  = ndatoms + nsia_dumbell_real_ico
+               ndatoms  = ndatoms + nsia_dumbell
                !new_solid = new_solid +  nsia_dumbell_real_ico + nsia_center_real_ico
                ntemp = ntemp
                nall = nall
@@ -342,9 +342,13 @@
                               rx,ry,rz)
 
                 write(*,*) 'after  ....:  nall,ntemp,new_solid,gndatoms, ndatoms',  nall,ntemp,new_solid,gndatoms, ndatoms
-                 if  (new_solid /= (ntemp + nsia_dumbell_real_ico + nsia_center_real_ico) ) then
-                     write (*,*) 'big problem after counting atoms ....'
+                 if  (new_solid /= (ntemp + 2*nsia_dumbell_real_ico + nsia_center_real_ico) ) then
+                     write (*,*) 'big problem after counting atoms ....', new_solid, ntemp + 2*nsia_dumbell_real_ico + nsia_center_real_ico
                  end if
+
+            else
+            call write_coordinates (ntemp,nsize,new_solid,rxgaos,rygaos,rzgaos,gndatoms,atoms_to_remove,ndatoms,&
+                              rx,ry,rz)
             end if
          else
             call write_coordinates (ntemp,nsize,new_solid,rxgaos,rygaos,rzgaos,gndatoms,atoms_to_remove,ndatoms,&
