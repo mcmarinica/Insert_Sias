@@ -1,0 +1,16 @@
+# CMake build directories (build/, build-ifx/, ...)
+/build*/
+
+# the executables
+/Src/bin/*.x
+
+# makefile build: local copy of the makefile, objects, module files
+/Src/Makefile
+/Src/obj/
+/Src/Modules/*.mod
+/Src/Modules/*__genmod.f90
+
+# compiler leftovers
+*.o
+*.a
+a.out
