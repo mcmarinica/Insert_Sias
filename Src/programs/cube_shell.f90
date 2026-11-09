@@ -1,3 +1,9 @@
+!=======================================================================
+! cube_shell.f90   (cube_shell.x)
+!
+! Builds a perfect fcc, bcc or C15 crystal with the atoms of an inner
+! block listed first: formd.str, formd.str_inner, formd.gin.
+!=======================================================================
           !construct the cube by shells .......
 	  ! you can and and substract shells to ab-initio
 	  !
@@ -174,7 +180,7 @@
 		
 		write(10,'("Fe ",3(f18.13))')   x,y,z
 		write(15,'("Fe ",3(f18.13))')   x,y,z
-	        write(11,'(i4,6(f10.5))')1,x,y,z,0,0,0
+	        write(11,'(i4,6(f10.5))')1,x,y,z,0.d0,0.d0,0.d0
 
 	        write(16,'(3(f25.15), "  1")')x/(a(1,1)*dble(n1)),y/(a(2,2)*dble(n2)) & 
 
@@ -200,7 +206,7 @@
 		
 	
 	write(10,'("Fe ",3(f18.13))')   x,y,z
-	        write(11,'(i4,6(f10.5))')1,x,y,z,0,0,0
+	        write(11,'(i4,6(f10.5))')1,x,y,z,0.d0,0.d0,0.d0
 	        write(16,'(3(f25.15), "  1")')x/(a(1,1)*dble(n1)),y/(a(2,2)*dble(n2)) & 
                                        ,z/(a(3,3)*dble(n3))
 

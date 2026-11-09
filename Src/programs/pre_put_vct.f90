@@ -1,3 +1,13 @@
+!=======================================================================
+! pre_put_vct.f90   (pre_put_vct.x)
+!
+! Generates the list of sites of a dislocation loop: a rectangle, a circle
+! or a hexagon cut in a (100), (111) or (110) plane of the crystal of
+! formd.str. The list, no00_new.inp, is the input of put_vct.x.
+! 
+! The program is self-contained and has its own compiled parameters, on
+! the first lines below.
+!=======================================================================
       implicit double precision (a-h,o-z)
       !old parameter (a0=2.8553,as110=2.148d0,as111=2.12d0,as100=2.1d0)
       parameter (a0=2.8553,as110=1.6,as111=1.6d0,as100=1.6d0)
@@ -29,6 +39,16 @@
                  rxc(nsolid)   ,  ryc(nsolid)   , rzc(nsolid)   ,   &
                  rxloop(nsolid),  ryloop(nsolid), rzloop(nsolid),   &
                  nicnt(nsolid) )
+
+      ! Only the first entries of these arrays receive atoms, and the search
+      ! of the loop centre takes the extrema of the whole arrays: the other
+      ! entries are zero.
+      rxc(:)=0.d0
+      ryc(:)=0.d0
+      rzc(:)=0.d0
+      rxloop(:)=0.d0
+      ryloop(:)=0.d0
+      rzloop(:)=0.d0
 
       call read_input(nsolid,a,rx,ry,rz)
 

@@ -1,3 +1,9 @@
+!=======================================================================
+! math.f90
+!
+! Module math: determinant and inverse of a 3x3 matrix, vector product,
+! greatest common divisor.
+!=======================================================================
 MODULE math
 
 CONTAINS

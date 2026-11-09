@@ -1,3 +1,9 @@
+!=======================================================================
+! module_100_smooth.f90
+!
+! Module the_100_smooth: displacement of the neighbours of a <100>
+! dumbbell along its [001] row (type 31).
+!=======================================================================
  module the_100_smooth
 
 implicit none
@@ -44,7 +50,6 @@ end subroutine allocate_the_100
    x_low_limit=1.5d0*as100 - ann
    x_high_limit=ann*dble(pbc_100)/(dble(pbc_100)+1)-ann+0.5d0*as100
    dx= 0.5d0*(x_low_limit + x_high_limit)
-   write(*,*) 'HELP', dx, x_low_limit, x_high_limit
 
    
     if (dx < as100/3.d0) then
@@ -146,7 +151,6 @@ integer :: jj,is,i
      rx(i) = rx(i)+rc100x(jj)
      ry(i) = ry(i)+rc100y(jj)
      rz(i) = rz(i)+rc100z(jj)
-     write(*,'(i5,3f12.5)') i, rc100x(jj),rc100y(jj),rc100z(jj)
    end do
   end do
 

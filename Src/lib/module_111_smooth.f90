@@ -1,3 +1,9 @@
+!=======================================================================
+! module_111_smooth.f90
+!
+! Module the_111_smooth: displacement of the neighbours of a <111>
+! dumbbell along its [111] row (types 21 and 221).
+!=======================================================================
  module the_111_smooth
 
 implicit none
@@ -60,7 +66,6 @@ end subroutine allocate_the_111_migration
    x_low_limit=1.5d0*as111 - ann
    x_high_limit=ann*dble(pbc_111)/(dble(pbc_111)+1)-ann+0.5d0*as111
    dx= 0.5d0*(x_low_limit + x_high_limit)
-   write(*,*) 'HELP', dx, x_low_limit, x_high_limit
 
    
     if (dx < as111/3.d0) then
@@ -192,7 +197,6 @@ end subroutine  build_the_nsite_the_111
 
  end do
 
- write(*,*) 
 
 
  do is=1,nsia
@@ -260,7 +264,6 @@ integer :: jj,is,i
   end do
 
 
-            write(*,'("deb side ",3f15.5)') rxb(7),ryb(7),rzb(7)
 
 
  return

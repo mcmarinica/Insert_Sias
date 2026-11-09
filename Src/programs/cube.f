@@ -1,3 +1,10 @@
+!=======================================================================
+! cube.f   (cube.x)
+!
+! Builds a perfect fcc or bcc crystal and writes it to formd.str.
+! Asks for the lattice type, the lattice parameter and the number of
+! cubic cells along x, y and z.
+!=======================================================================
 	  implicit none 
           integer :: istruct,n1,n2,n3,ntemp,natc, in,ic,itt,i,j,k
           real(8) :: a0,a02,CELLDM,Rx,Ry,Rz,x,y,z  

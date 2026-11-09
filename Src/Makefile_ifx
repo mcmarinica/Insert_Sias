@@ -1,0 +1,12 @@
+# Insert_Sias with the Intel compiler:
+#
+#   cp Makefile_ifx Makefile ; make
+#
+# For the classic Intel compiler, set FC = ifort.
+# The rules are in Makefile.common.
+
+FC      = ifx
+FFLAGS  = -O3
+MODFLAG = -module
+
+include Makefile.common

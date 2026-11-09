@@ -1,0 +1,73 @@
+# Rules shared by Makefile_gfortran and Makefile_ifx. Those two files set
+#   FC        the compiler
+#   FFLAGS    its options
+#   MODFLAG   the option that names the directory of the module files
+# and include this one.
+#
+#   make          builds the five executables in bin/
+#   make clean    removes everything that make created
+
+BIN    = bin
+MODDIR = Modules
+OBJDIR = obj
+LIB    = $(OBJDIR)/libinsert_sias.a
+
+# lib/: the modules, then the routines outside modules
+MODULES  = module_defect_types math module_pbc module_octahedre module_migration_sia \
+           module_111_smooth module_100_smooth lammps_output
+ROUTINES = input sites point_defects migration clusters kazuto_style \
+           rotations indexx lapack
+
+MOD_OBJ = $(MODULES:%=$(OBJDIR)/%.o)
+SUB_OBJ = $(ROUTINES:%=$(OBJDIR)/%.o)
+MODOPT  = $(MODFLAG) $(MODDIR) -I $(MODDIR)
+
+PROGRAMS = $(BIN)/cube.x $(BIN)/cube_shell.x $(BIN)/put_vct.x \
+           $(BIN)/pre_put_vct.x $(BIN)/read_write_n00.x
+
+all: $(PROGRAMS)
+
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
+
+# ---- the library of put_vct.x -------------------------------------------
+
+$(OBJDIR)/%.o: lib/%.f90 | $(OBJDIR)
+	$(FC) $(FFLAGS) $(MODOPT) -c $< -o $@
+
+$(OBJDIR)/%.o: lib/%.f | $(OBJDIR)
+	$(FC) $(FFLAGS) -c $< -o $@
+
+# a module must be compiled before the sources that use it
+$(OBJDIR)/module_111_smooth.o: $(OBJDIR)/module_migration_sia.o
+$(SUB_OBJ): $(MOD_OBJ)
+
+$(LIB): $(MOD_OBJ) $(SUB_OBJ)
+	rm -f $@
+	ar rc $@ $^
+
+# ---- the programs -------------------------------------------------------
+
+$(OBJDIR)/put_vct.o: programs/put_vct.f90 $(MOD_OBJ) | $(OBJDIR)
+	$(FC) $(FFLAGS) $(MODOPT) -c $< -o $@
+
+$(BIN)/put_vct.x: $(OBJDIR)/put_vct.o $(LIB)
+	$(FC) $(FFLAGS) -o $@ $^
+
+# the other programs are self-contained
+$(BIN)/cube.x: programs/cube.f
+	$(FC) $(FFLAGS) -o $@ $<
+
+$(BIN)/cube_shell.x: programs/cube_shell.f90
+	$(FC) $(FFLAGS) -o $@ $<
+
+$(BIN)/pre_put_vct.x: programs/pre_put_vct.f90
+	$(FC) $(FFLAGS) -o $@ $<
+
+$(BIN)/read_write_n00.x: programs/read_write_n00.f90
+	$(FC) $(FFLAGS) -o $@ $<
+
+clean:
+	rm -f $(OBJDIR)/*.o $(LIB) $(MODDIR)/*.mod $(PROGRAMS)
+
+.PHONY: all clean

@@ -1,116 +1,21 @@
-!#####################################################################
-
-
-!#####################################################################
-   subroutine fix_ico_type (nsia,ns1,ns2,ns3,n1MAX,n2MAX,n3MAX)
-   use icosaedre, only:  type_icos
-   integer  :: nsia, n1MAX,n2MAX,n3MAX,i
-   integer  :: ns1(nsia),ns2(nsia),ns3(nsia), i1,i2,i3
-
-   if (allocated(type_icos)) deallocate(type_icos);  allocate (type_icos(nsia))
-      do i=1,nsia
-
-        i1 =  mod(ns1(i),2)
-        i2 =  mod(ns2(i),2)
-        i3 =  mod(ns3(i),2)
-
-        if (i1==0) type_icos(i)=2
-        if (i1==1) type_icos(i)=1
-
-        if ((i1 /= i2) .or. (i1/= i3)) then
-            write(*,*) 'sia site ', i, 'all the line should have the same parity'
-            write(*,*) 'ns1, ns2, ns3', ns1(i),ns2(i), ns3(i)
-            stop
-        end if
-      end do
-   return
-   end
-
-
-   subroutine fix_ico_type_mixed (nsia,ns1,ns2,ns3,n1MAX,n2MAX,n3MAX)
-   use icosaedre, only:  type_icos, nsia_ico, nsia_dumbell
-   integer  :: nsia, n1MAX,n2MAX,n3MAX,i
-   integer  :: ns1(nsia),ns2(nsia),ns3(nsia), i1,i2,i3
-
-   if (allocated(type_icos)) deallocate(type_icos);  allocate (type_icos(nsia))
-      do i=1,nsia_ico
-
-        i1 =  mod(ns1(i),2)
-        i2 =  mod(ns2(i),2)
-        i3 =  mod(ns3(i),2)
-
-        if (i1==0) type_icos(i)=2
-        if (i1==1) type_icos(i)=1
-
-        if ((i1 /= i2) .or. (i1/= i3)) then
-            write(*,*) 'sia site ', i, 'all the line should have the same parity'
-            write(*,*) 'ns1, ns2, ns3', ns1(i),ns2(i), ns3(i)
-            stop
-        end if
-      end do
-
-
-   return
-   end
-
-
-
-
-  subroutine read_config_sia_octa (nsia,type_octa,  &
-                    ns1,ns2,ns3,n1MAX,n2MAX,n3MAX)
-
-  integer  :: nsia, n1MAX,n2MAX,n3MAX,i
-  integer  :: ns1(nsia),ns2(nsia),ns3(nsia),type_octa(nsia)
-
-
-!          do i=1,nsia
-!           read (11,*) ns1(i),ns2(i),ns3(i)
-!           write(*,*) 'ns22',ns1(i),ns2(i),ns3(i)
-!            if ( (ns1(i) > n1MAX) .or.(ns2(i) > n2MAX) .or. &
-!              (ns3(i) > n3MAX) ) then
-!            print*, 'Big problem in read_config_sia'
-!            print*, 'The cell is not big enough. Increase the size!'
-!              write(*,*) '<read_config_sia_octa>'
-!            stop
-!            end if
-!          end do
-     do i=1,nsia
-      read(11,*) type_octa(i)
-      !debug write(*,*) 'ns22 HERRRRRRRRRRRE',  type_octa(i)
-      if ( (type_octa(i).lt.1).or.((type_octa(i).gt.4)) ) then
-      write(*,*) 'There is no implementation for this octa type', &
-        type_octa(i)
-       write(*,*) '<read_config_sia_octa>'
-       stop
-      end if
-     end do
-
-  return
-  end
-
-
-  subroutine read_config_sia_ico (nsia,nd1,nd2,nd3)
-  use icosaedre, only : type_dumb
-  integer  :: nsia, i
-  integer  :: nd1(nsia),nd2(nsia),nd3(nsia)
-
-
-     do i=1,nsia
-      read(11,*) nd1(i),nd2(i), nd3(i), type_dumb(i)
-      !debug write(*,*) 'ns22 HERRRRRRRRRRRE',  type_octa(i)
-      if ( (type_dumb(i).lt.1).or.((type_dumb(i).gt.4)) ) then
-      write(*,*) 'There is no implementation for this octa type'
-      write(*,*) '<read_config_sia_ico>'
-       stop
-      end if
-     end do
-
-  return
-  end
-
-
-
-!#####################################################################
+!=======================================================================
+! clusters.f90
+!
+! C15 and icosahedral clusters (types 6, 67, 7, 77): the lattice atoms to
+! remove, the atoms to insert, the merging of what linked units share, and
+! the output files.
+!
+!   lattice_compute_different_removeatoms     number of distinct sites to empty
+!   lattice_compute_atoms_to_remove           list of the distinct sites to empty
+!   offlattice_get_coordinates_and_order      atoms inserted by the C15 units, sorted
+!   offlattice_compute_atoms_to_remove        the same without the duplicates
+!   ico_offlattice_get_coordinates_and_order  atoms inserted by the icosahedral units, sorted
+!   ico_offlattice_compute_atoms_to_remove    the same without the duplicates
+!   dumbell_ico                               extra dumbbells and single atoms of type 77
+!   write_coordinates                         final coordinates: inserted atoms first, then the remaining crystal
+!   write_formd_new_org                       reference crystal, formd_new_ndm_org.str
+!   write_out_octa                            output files of the cluster types
+!=======================================================================
 
   subroutine  lattice_compute_different_removeatoms (nsia, &
       nlac_remove, nsite_octa_vac_remove,indx,list_no_order,ndatoms)
@@ -164,7 +69,7 @@
    return
    end
 
-!#####################################################################
+!=======================================================================
 
  subroutine  lattice_compute_atoms_to_remove  (atoms_to_remove,&
                atoms_to_remove_type,ndatoms,nlac_remove,         &
@@ -201,7 +106,8 @@
 
   return
   end
-!#####################################################################
+
+!=======================================================================
 
   subroutine  offlattice_get_coordinates_and_order(a0,rxgaos,rygaos,rzgaos,&
                                                    rx,    ry,    rz,    &
@@ -287,8 +193,43 @@
    return
    end
 
+!=======================================================================
 
-!#####################################################################
+subroutine offlattice_compute_atoms_to_remove(gndatoms,rxgaos,rygaos,rzgaos,temprxgaos,temprygaos,temprzgaos,&
+                      offlattice_no_order,indx,nsia,natoms_extra)
+
+implicit none
+
+integer, intent(in) :: nsia
+integer,  intent(in) :: indx (12*nsia),gndatoms,natoms_extra
+
+real(8), dimension(12*nsia),    intent(in) :: offlattice_no_order,temprxgaos,temprygaos,temprzgaos
+real(8), dimension(gndatoms),  intent(out) :: rxgaos,rygaos,rzgaos
+integer :: i_double,i,icnt
+
+i_double=0
+icnt=1
+
+ rxgaos(1)=temprxgaos(indx(1))
+ rygaos(1)=temprygaos(indx(1))
+ rzgaos(1)=temprzgaos(indx(1))
+do    i=1,natoms_extra-1
+  if (dabs(offlattice_no_order(indx(i+1))-offlattice_no_order(indx(i))).lt.0.1d0) then
+i_double = i_double+1
+else
+ icnt=icnt+1
+ rxgaos(icnt)=temprxgaos(indx(i+1))
+ rygaos(icnt)=temprygaos(indx(i+1))
+ rzgaos(icnt)=temprzgaos(indx(i+1))
+
+end if
+end do
+
+  write(*,'("II Final number of removed GAOS  .: ",i6)') i_double
+return
+end subroutine offlattice_compute_atoms_to_remove
+
+!=======================================================================
 
 subroutine  ico_offlattice_get_coordinates_and_order(a0,rxgaos,rygaos,rzgaos,&
                                                    rx,    ry,    rz,ns1,ns2,ns3,    &
@@ -329,7 +270,6 @@ it_icos=type_icos(i)
        rygaos(icnt)=a02*(alpha*icos(it_icos)%add(2,jj)+ origin(2))
        rzgaos(icnt)=a02*(alpha*icos(it_icos)%add(3,jj)+ origin(3))
        offlattice_no_order(icnt)=rxgaos(icnt)**3+10*rygaos(icnt)**3+100*rzgaos(icnt)**3
-       write(*,'("ig", i6,f20.7,3f18.6)') icnt, offlattice_no_order(icnt), rxgaos(icnt), rygaos(icnt), rzgaos(icnt)
      end do
    !end if
 
@@ -370,6 +310,8 @@ end do
 return
 end subroutine  ico_offlattice_get_coordinates_and_order
 
+!=======================================================================
+
 subroutine ico_offlattice_compute_atoms_to_remove(gndatoms,rxgaos,rygaos,rzgaos,temprxgaos,temprygaos,temprzgaos,&
                       offlattice_no_order,indx,nsia,natoms_extra)
 
@@ -406,119 +348,7 @@ end do
 return
 end subroutine ico_offlattice_compute_atoms_to_remove
 
-
-
-subroutine offlattice_compute_atoms_to_remove(gndatoms,rxgaos,rygaos,rzgaos,temprxgaos,temprygaos,temprzgaos,&
-                      offlattice_no_order,indx,nsia,natoms_extra)
-
-implicit none
-
-integer, intent(in) :: nsia
-integer,  intent(in) :: indx (12*nsia),gndatoms,natoms_extra
-
-real(8), dimension(12*nsia),    intent(in) :: offlattice_no_order,temprxgaos,temprygaos,temprzgaos
-real(8), dimension(gndatoms),  intent(out) :: rxgaos,rygaos,rzgaos
-integer :: i_double,i,icnt
-
-i_double=0
-icnt=1
-
- rxgaos(1)=temprxgaos(indx(1))
- rygaos(1)=temprygaos(indx(1))
- rzgaos(1)=temprzgaos(indx(1))
-do    i=1,natoms_extra-1
-  if (dabs(offlattice_no_order(indx(i+1))-offlattice_no_order(indx(i))).lt.0.1d0) then
-i_double = i_double+1
-else
- icnt=icnt+1
- rxgaos(icnt)=temprxgaos(indx(i+1))
- rygaos(icnt)=temprygaos(indx(i+1))
- rzgaos(icnt)=temprzgaos(indx(i+1))
-
-end if
-end do
-
-  write(*,'("II Final number of removed GAOS  .: ",i6)') i_double
-return
-end subroutine offlattice_compute_atoms_to_remove
-
-!#####################################################################
-
-
-
-
-subroutine write_coordinates (ntemp,nsize,new_solid,rxgaos,rygaos,rzgaos,gndatoms,atoms_to_remove,ndatoms,&
-                        rx,ry,rz)
-
-use octahedre
-implicit none
-integer,intent(in)  :: ntemp,nsize,ndatoms,gndatoms
-integer, intent(out)  :: new_solid
-double precision,dimension(gndatoms),intent(in)     :: rxgaos,rygaos,rzgaos
-double precision,dimension(ndatoms),intent(in)     :: atoms_to_remove(ndatoms)
-double precision,dimension(nsize),intent(inout)     :: rx,ry,rz
-double precision,dimension(nsize)     :: rxtemp,rytemp,rztemp
-integer :: i,icnt,is,icard,i_test_card
-integer :: i1,i2
-!
-!
-icnt=0
-rxtemp(:)=99999999.d0
-rytemp(:)=99999999.d0
-rztemp(:)=99999999.d0
-!ntemp   - the bulk reference
-!ndatoms - the atoms that should be removed
-!gndatoms- the extratoms as gaos, sias etc
-!debug write(*,*) 'write_coordinates  ntemp, ndatoms, gndatoms :', ntemp, ndatoms, gndatoms
-
-!writting the SIAs in 77 file
-
-do i=1,gndatoms
-  icnt=icnt+1
-  rxtemp(icnt)=rxgaos(i)
-  rytemp(icnt)=rygaos(i)
-  rztemp(icnt)=rzgaos(i)
-  write (77,'("atom Fe1   ",i6, 3f15.4)') icnt, rxgaos(icnt),rygaos(icnt),rzgaos(icnt)
-end do
-
-
-i1=0
-i2=0
-i_test_card=0
-do i=1,ntemp
-  icard=0
-  do is=1,ndatoms
-    if (i==nint(atoms_to_remove(is))) then
-      i_test_card=i_test_card+1
-      icard=1
-      i1=i1+1
-    endif
-  end do
-  if (icard==0) then
-    i2=i2+1
-    icnt=icnt+1
-    rxtemp(icnt)=rx(i)
-    rytemp(icnt)=ry(i)
-    rztemp(icnt)=rz(i)
-  end if
-end do
-  write(*,*) 'toto', i1, i2, ndatoms, gndatoms
-  if (icnt.gt.nsize) then
-   write(*,*) '<write_cordinates> Vector size not correct...icnt vs nsize:',icnt,nsize
-   write(*,*) '<write_cordinates> icnt should be lower than nsize:',icnt,nsize
- ! stop
- end if
-
-   write(*,*) i1,i2,gndatoms, i1+i2+gndatoms
-   write(*,*) '<write_coordinates> Final number of atoms.:',icnt
- new_solid=icnt
- !in rx the first new_solid atoms are the real atoms of the final sistem. All others up to nsize are ghost atoms
- rx(1:nsize)=rxtemp(1:nsize)!*volc
- ry(1:nsize)=rytemp(1:nsize)!*volc
- rz(1:nsize)=rztemp(1:nsize)!*volc
-
- return
- end subroutine write_coordinates
+!=======================================================================
 
 subroutine dumbell_ico(rxb,ryb,rzb,nr, nd1,nd2,nd3,nd, a02)
 use icosaedre, only : nsia_dumbell, r_extra_ico, nsite_dumb_remove, rdumb, type_dumb, nsia_dumbell_real_ico, nsia_center_real_ico
@@ -603,8 +433,113 @@ end if
 return
 end subroutine dumbell_ico
 
+!=======================================================================
 
-!#####################################################################
+subroutine write_coordinates (ntemp,nsize,new_solid,rxgaos,rygaos,rzgaos,gndatoms,atoms_to_remove,ndatoms,&
+                        rx,ry,rz)
+
+use octahedre
+implicit none
+integer,intent(in)  :: ntemp,nsize,ndatoms,gndatoms
+integer, intent(out)  :: new_solid
+double precision,dimension(gndatoms),intent(in)     :: rxgaos,rygaos,rzgaos
+double precision,dimension(ndatoms),intent(in)     :: atoms_to_remove(ndatoms)
+double precision,dimension(nsize),intent(inout)     :: rx,ry,rz
+double precision,dimension(nsize)     :: rxtemp,rytemp,rztemp
+integer :: i,icnt,is,icard,i_test_card
+integer :: i1,i2
+!
+!
+icnt=0
+rxtemp(:)=99999999.d0
+rytemp(:)=99999999.d0
+rztemp(:)=99999999.d0
+!ntemp   - the bulk reference
+!ndatoms - the atoms that should be removed
+!gndatoms- the extratoms as gaos, sias etc
+!debug write(*,*) 'write_coordinates  ntemp, ndatoms, gndatoms :', ntemp, ndatoms, gndatoms
+
+!writting the SIAs in 77 file
+
+do i=1,gndatoms
+  icnt=icnt+1
+  rxtemp(icnt)=rxgaos(i)
+  rytemp(icnt)=rygaos(i)
+  rztemp(icnt)=rzgaos(i)
+  write (77,'("atom Fe1   ",i6, 3f15.4)') icnt, rxgaos(icnt),rygaos(icnt),rzgaos(icnt)
+end do
+
+
+i1=0
+i2=0
+i_test_card=0
+do i=1,ntemp
+  icard=0
+  do is=1,ndatoms
+    if (i==nint(atoms_to_remove(is))) then
+      i_test_card=i_test_card+1
+      icard=1
+      i1=i1+1
+    endif
+  end do
+  if (icard==0) then
+    i2=i2+1
+    icnt=icnt+1
+    rxtemp(icnt)=rx(i)
+    rytemp(icnt)=ry(i)
+    rztemp(icnt)=rz(i)
+  end if
+end do
+  if (icnt.gt.nsize) then
+   write(*,*) '<write_cordinates> Vector size not correct...icnt vs nsize:',icnt,nsize
+   write(*,*) '<write_cordinates> icnt should be lower than nsize:',icnt,nsize
+ ! stop
+ end if
+
+   write(*,*) '<write_coordinates> Final number of atoms.:',icnt
+ new_solid=icnt
+ !in rx the first new_solid atoms are the real atoms of the final sistem. All others up to nsize are ghost atoms
+ rx(1:nsize)=rxtemp(1:nsize)!*volc
+ ry(1:nsize)=rytemp(1:nsize)!*volc
+ rz(1:nsize)=rztemp(1:nsize)!*volc
+
+ return
+ end subroutine write_coordinates
+
+!=======================================================================
+
+    subroutine write_formd_new_org (ntemp,nsize,rx,ry,rz,a,a0,volc)
+    use math
+    use pbc
+    implicit none
+    integer, intent(in)  :: ntemp,nsize
+    real(8), intent(in)  :: rx(nsize),ry(nsize),rz(nsize)
+    real(8), intent(in)  ::a(3,3),a0,volc
+    real(8)   :: a02
+    integer ::  i
+    real(kind(1.d0)), dimension(3) :: xp,xc
+
+
+              a02=a0/2.d0
+ open (21,file='formd_new_ndm_org.str',form='formatted',status='unknown')
+
+        write(21,'("1   1   1")')
+      write(21,'(3f18.13)')a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
+        write(21,'(3f18.13)')a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
+        write(21,'(3f18.13)')a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
+      write(21,'(i8)') ntemp
+
+       do i=1,ntemp
+        xp(1:3)=(/ rx(i),ry(i),rz(i) /)*volc
+        xc(1:3)=MatMul(inv_at(:,:)/volc,xp(:))
+       write(21,'("   ",3(f18.13),"   1")') xc(1:3)
+       end do
+
+      close(21)
+    return
+    end
+
+!=======================================================================
 
        subroutine write_out_octa (nall,ntemp,new_solid,gndatoms,volc,&
                        a0, rx, ry, rz, rxb, ryb, rzb, a, ndatoms,    &
@@ -618,6 +553,7 @@ end subroutine dumbell_ico
       ! ndatoms = the no of vacancies ( the atoms which are removed due to C15 phase)
        use math
        use pbc
+       use lammps_output
        implicit none
        integer :: nsia
        integer :: nsite(nsia)
@@ -637,7 +573,6 @@ end subroutine dumbell_ico
        integer :: f_jsia_xyz, f_sia_xyz, f_usia_xyz, f_jusia_xyz, f_uvsia_xyz, f_uvbsia_xyz, &
                   f_uvbcsia_xyz, f_uvbcsia_sim_xyz, f_unit_cell,  f_geom_new_data, f_geom_org_data, &
                   f_new_ndm_scl,f_formd_new_str
-       write(*,*) ' nall,ntemp,new_solid,gndatoms, ndatoms',nall,ntemp,new_solid,gndatoms, ndatoms
 
        CELLDM=1.0
        in=1
@@ -686,6 +621,8 @@ end subroutine dumbell_ico
 
       f_formd_new_str=15
       open (f_formd_new_str,file='formd_new.str',form='formatted',status='unknown')
+      call lammps_begin ('formd_new.lmp', new_solid, a*volc, &
+           'Insert_Sias: crystal with defects (formd_new.str), lengths in Angstrom')
 
       write(f_formd_new_str,'(i8)') new_solid
       write(f_formd_new_str,'(3f18.13)')a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
@@ -822,6 +759,7 @@ end subroutine dumbell_ico
         write(f_uvbcsia_sim_xyz,'("Fe  ",3f18.13)') x,y,z
         write(f_unit_cell,10) icnt,x,y,z,in,in,in
         write(f_formd_new_str,'(a3,3(f18.13))') 'Fe ', x,y,z
+        call lammps_atom (x, y, z)
         write(f_geom_new_data,'(a3,3(f18.13))') '   ', x,y,z
         xp(1:3)=(/  x, y, z/)
         xc(1:3) = MatMul(inv_at(1:3,1:3)/volc, xp(1:3))
@@ -853,7 +791,6 @@ end subroutine dumbell_ico
       end do
         end do
 
-         write(*,*) xmin,ymin,zmin,xmax,ymax,zmax
 
        ! then write the centers of C15 clusters ...
 !       do i =1,nsia
@@ -873,6 +810,7 @@ end subroutine dumbell_ico
            write(f_jsia_xyz,'("Cu  ",3f12.5)') rxb(i)*volc,ryb(i)*volc,rzb(i)*volc
            write(f_unit_cell,10) icnt,rx(i)*volc,ry(i)*volc,rz(i)*volc,in,in,in
            write(f_formd_new_str,'(a3,3(f18.13))') 'Fe ', rxb(i)*volc,ryb(i)*volc,rzb(i)*volc
+           call lammps_atom (rxb(i)*volc, ryb(i)*volc, rzb(i)*volc)
            write(f_geom_new_data,'(a3,3(f18.13))') '   ', rxb(i)*volc,ryb(i)*volc,rzb(i)*volc
            xp(1:3)=(/ rxb(i),ryb(i),rzb(i) /)*volc
            xc(1:3)=MatMul(inv_at(:,:)/volc,xp(:))
@@ -904,6 +842,7 @@ end subroutine dumbell_ico
             write(f_jsia_xyz,'("Cu  ",3f12.5)') rx(i)*volc,ry(i)*volc,rz(i)*volc
             write(f_unit_cell,10) icnt,rx(i)*volc,ry(i)*volc,rz(i)*volc,in,in,in
             write(f_formd_new_str,'(a3,3(f18.13))') 'Fe ', rx(i)*volc,ry(i)*volc,rz(i)*volc
+            call lammps_atom (rx(i)*volc, ry(i)*volc, rz(i)*volc)
             write(f_geom_new_data,'(a3,3(f18.13))') '   ', rx(i)*volc,ry(i)*volc,rz(i)*volc
              xp(1:3)=(/ rx(i),ry(i),rz(i) /)*volc
              xc(1:3)=MatMul(inv_at(:,:)/volc,xp(:))
@@ -970,6 +909,8 @@ end subroutine dumbell_ico
 
 
 
+       call lammps_end ()
+
        close(f_sia_xyz)
        close(f_usia_xyz)
        close(f_jsia_xyz)
@@ -981,107 +922,4 @@ end subroutine dumbell_ico
        return
        end
 
-
-
-    subroutine write_formd_new_org (ntemp,nsize,rx,ry,rz,a,a0,volc)
-    use math
-    use pbc
-    implicit none
-    integer, intent(in)  :: ntemp,nsize
-    real(8), intent(in)  :: rx(nsize),ry(nsize),rz(nsize)
-    real(8), intent(in)  ::a(3,3),a0,volc
-    real(8)   :: a02
-    integer ::  i
-    real(kind(1.d0)), dimension(3) :: xp,xc
-
-
-              a02=a0/2.d0
- open (21,file='formd_new_ndm_org.str',form='formatted',status='unknown')
-
-        write(21,'("1   1   1")')
-      write(21,'(3f18.13)')a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
-        write(21,'(3f18.13)')a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
-        write(21,'(3f18.13)')a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
-      write(21,'(i8)') ntemp
-
-       do i=1,ntemp
-        xp(1:3)=(/ rx(i),ry(i),rz(i) /)*volc
-        xc(1:3)=MatMul(inv_at(:,:)/volc,xp(:))
-       write(21,'("   ",3(f18.13),"   1")') xc(1:3)
-       end do
-
-      close(21)
-    return
-    end
-
-
-
-
-
-subroutine solid_and_defect_cut (a0, surface, new_solid, gndatoms, nsize, &
-             rx,ry,rz, isite_surface, is_tot, izcoordinate, plane_corner)
-!----------------------------------------------------------------------------
-!object:  mark the atoms which are inside in the Kazuto's cut paralelipiped
-!method:
-!         the point P is  projected in (XY) plane
-!         the sum of surfaces of triangles SurfaceP=Sum_i {Corner_i, Corner_i+1, Pprojection} is computed
-!         if the:
-!                   (Surface_base = SurfaceP) is true
-!                   (Zcoordinate_of_P is between the Z of paralelipiped)  is true
-!         then the point P is inside the paralelipiped
-!input:
-!output:
-!          isite_surface(i)=0 not in paralelipiped
-!          isite_surface(i)=i is included in paralelipiped
-!-----------------------------------------------------------------------------
-implicit none
-
-integer, intent(in)  :: new_solid, gndatoms,nsize,izcoordinate
-real(8), intent(in)  :: a0, surface
-real(8), dimension(3,4), intent(in) :: plane_corner
-real(8), dimension(nsize), intent(in) :: rx,ry,rz
-integer, dimension(nsize),intent(out) :: isite_surface
-integer, intent(out)  :: is_tot
-real(8) :: surface_test, surface_kl
-integer ::  itest_c15,k ,l,i
-
-
-            is_tot=0
-            itest_c15=0
-            isite_surface(:)=0
-
-             do i=1,new_solid
-                surface_test=0.d0
-                 do k=1,4
-                  l=k+1
-                   if (l==5) l=1
-                      call surface_of_three_points_in_plane(       rx(i),ry(i),     &
-                                    a0*dble(plane_corner(1,k))/2.d0,a0*dble(plane_corner(2,k))/2.d0,      &
-                                    a0*dble(plane_corner(1,l))/2.d0,a0*dble(plane_corner(2,l))/2.d0,surface_kl)
-                      surface_test=surface_test+surface_kl
-
-                  !write(*,*) surface_test/(a0/2.d0)**2, surface_kl/(a0/2.d0)**2
-                 end do
-
-                 if (dabs(surface_test/(a0/2.d0)**2-surface)<=0.1d0) then
-                  if ((dble(izcoordinate)+0.1d0)>=rz(i)/(a0/2.d0)) then
-                    isite_surface(i)=1
-                    is_tot=is_tot+1
-                    if (i<=gndatoms) then
-                      itest_c15=itest_c15+1
-                    end if
-                !debug   write(26,*)  rx(i), ry(i)
-                  end if
-                 end if
-             !debug write (27,*) rx(i), ry(i)
-
-             !write(*,*)i, surface, surface_test/(a0/2.d0)**2
-             end do    ! i=new_solid
-             if (itest_C15/=gndatoms) then
-               write(*,*) 'WARNING NOT ALL THE C15 atoms are INCLUDED IN THE CUT'
-             end if
-             write(*,*) '........', is_tot
-
-
-return
-end subroutine solid_and_defect_cut
+!=======================================================================

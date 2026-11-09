@@ -1,3 +1,8 @@
+!=======================================================================
+! module_migration_sia.f90
+!
+! Module migration_sia: data of the dumbbell jumps (types 22 and 221).
+!=======================================================================
  module migration_sia
    integer :: nfix,nmig
    integer, allocatable,dimension(:) :: type_migration,nsite_fixed,  &

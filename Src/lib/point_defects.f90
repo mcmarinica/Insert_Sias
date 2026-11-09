@@ -1,266 +1,18 @@
-!#####################################################################
-
-   subroutine read_ntemp (ntemp)
-    integer :: ntemp
-
-   open (10,file='formd.str',form='formatted',status='unknown')
-     read (10,'(i8)') ntemp
-
-    return
-    end
-!#####################################################################
-
-   subroutine read_nsia (nsia,tsia)
-   use icosaedre, only: nsia_ico, nsia_dumbell
-   use migration_sia
-   integer :: nsia,tsia
-
-   if ((tsia==22).or.(tsia==221)) then
-    open (11,file='no00m.inp',form='formatted',status='unknown')
-    read (11,*) nsia,nmig,nfix
-    if ((nfix+nmig)/=nsia) then
-      write(*,*) "nfix + nmig should be equal to nsia, nsia,nfix,nmig.....:",nsia,nfix,nmig
-      write(*,*) "stop in read_nsia"
-      stop
-    end if
-
-   else
-
-    open (11,file='no00.inp',form='formatted',status='unknown')
-    if (tsia==77) then
-       read (11,*) nsia_ico, nsia_dumbell
-     else
-       read (11,*) nsia
-    end if
-   end if
-
-   return
-   end
-
-!#####################################################################
-   subroutine read_input(ntemp,nsize,a,rx,ry,rz)
-   use math
-   use pbc
-   implicit none
-   integer              :: ntemp,nsize,i
-   double precision     :: rx(nsize),ry(nsize),rz(nsize)
-   double precision,dimension(:,:) :: a(3,3)
-   character*3 :: sym
-
-
-    read(10,'(3f18.13)')a(1,1), a(1,2), a(1,3)
-    read(10,'(3f18.13)')a(2,1), a(2,2), a(2,3)
-    read(10,'(3f18.13)')a(3,1), a(3,2), a(3,3)
-
-    at(:,1)=a(1,:)
-    at(:,2)=a(2,:)
-    at(:,3)=a(3,:)
-    ! Inverse matrix
-    CALL MatInv(at,inv_at)
-
-  do i=1,ntemp
-        read(10,'(a3,3(f18.13))') sym, rx(i),ry(i),rz(i)
-    end do
-
-
-
-   return
-   end
-!#####################################################################
-   subroutine read_config_sia (nsia,ns1,ns2,ns3,n1MAX,n2MAX,n3MAX)
-   integer  :: nsia, n1MAX,n2MAX,n3MAX,i
-   integer  :: ns1(nsia),ns2(nsia),ns3(nsia)
-
-
-      do i=1,nsia
-       read (11,*) ns1(i),ns2(i),ns3(i)
-       !write(*,*) 'ns11',ns1(i),ns2(i),ns3(i)
-        if ( (ns1(i) > n1MAX+1) .or.(ns2(i) > n2MAX+1) .or. &
-          (ns3(i) > n3MAX+1) ) then
-        print*, 'Big problem in read_config_sia'
-        print*, 'The cell is not big enough. Increase the size!'
-        print*, '<read_config_sia>', n1MAX+1, n2MAX+1, n3MAX+1
-        stop
-        end if
-      end do
-   return
-   end
-
-!#####################################################################
-   subroutine read_config_sia_migration (nsia, ns1,ns2,ns3,n1MAX,n2MAX,n3MAX)
-   use migration_sia
-   integer  :: nsia, n1MAX,n2MAX,n3MAX,i
-   integer  :: ns1(nsia),ns2(nsia),ns3(nsia)
-   integer  :: i1,i2
-     i1=0
-     i2=0
-
-      do i=1,nsia
-       read (11,*) ns1(i),ns2(i),ns3(i),type_migration(i)
-       !write(*,*) 'ns11',ns1(i),ns2(i),ns3(i)
-        if ( (ns1(i) > n1MAX+1) .or.(ns2(i) > n2MAX+1) .or. &
-          (ns3(i) > n3MAX+1) ) then
-        print*, 'Big problem in read_config_sia'
-        print*, 'The cell is not big enough. Increase the size!'
-        print*, '<read_config_sia_migration>'
-        stop
-        end if
-        if (.not.((type_migration(i)==0).or.(type_migration(i)==1))) then
-          write(*,*) "The 4th colomn of no00m.inp should be 0 or 1"
-          write(*,*) "stop in read_config_sia_migration"
-          stop
-        end if
-
-        if (type_migration(i)==1) then
-         if ( (ns1(i) > n1MAX-1) .or.(ns2(i) > n2MAX-1) .or. &
-           (ns3(i) > n3MAX-1) ) then
-           print*, 'Big problem in read_config_sia_migration'
-           print*, 'The cell is not big enough. Increase the size!'
-           print*, '<read_config_sia_migration>'
-           stop
-         end if
-         if ( (ns1(i)==0) .or.(ns2(i)==0) .or. &
-           (ns3(i)==0 )) then
-           print*, 'Big problem in read_config_sia_migrration'
-           print*, 'You cannot have 0 in the coordinates for migrating interstitials'
-           print*, '<read_config_sia_migration>'
-           stop
-         end if
-        end if
-
-
-       if (type_migration(i)==1) i1=i1+1
-       if (type_migration(i)==0) i2=i2+1
-      end do
-
-     if (i1/=nmig) then
-      write(*,*) "The number of migrating atoms diff from nmig ...i1 and nmig ...:", i1,nmig
-      stop
-     end if
-
-     if (i2/=nfix) then
-      write(*,*) "The number of fixed atoms diff from nfix ...i2 and nfix ...:", i2,nfix
-      stop
-     end if
-
-
-
-   return
-   end
-
-
-!#####################################################################
-
-
-   subroutine analyze_config_sia (tsia,nsia,ns1,ns2,ns3,n1MAX,n2MAX,n3MAX)
-
-   implicit none
-   integer  :: nsia, n1MAX,n2MAX,n3MAX,i,j
-   integer  :: ns1(nsia),ns2(nsia),ns3(nsia)
-   integer  :: ii,neigh(5),tsia
-   real(8)  :: bcc(5),dij,delta=0.1d0
-
-  if ((tsia>3).and.(tsia/=21)) then
-   write(*,*) 'WARNING ... the analyze_config SIA .... Not yet implemented for tsia  ',tsia
-   !stop
-  end if
-
-  if (tsia==2) then
- ! in a0 units the bcc NN distances
-  bcc(1)=dsqrt(3.d0)/2.d0
-  bcc(2)=1.d0
-  bcc(3)=dsqrt(2.d0)
-  bcc(4)=dsqrt(3.d0)
-  bcc(5)=2.d0
- end if
-
-if (tsia==3) then
-  bcc(1)=dsqrt(3.d0)/2.d0
-  bcc(2)=1.d0
-  bcc(3)=dsqrt(2.d0)
-  bcc(4)=dsqrt(11.d0)/2.d0
-  bcc(5)=2.d0
-end if
-
- ! in internal units of a0/2 this distances gives
-  bcc(:)=2.d0*bcc(:)
-
- write(567,'(i8)')  nsia
- do i=1,nsia
-    neigh(:) = 0
-  do j=1,nsia
-  ! if (tsia==3) then
-  !  dij=dsqrt(dble(                      &
-  !            (ns1(i)-ns1(j))**2 +  &
-  !            (ns2(i)-ns2(j))**2    &
-  !            ))
-  !
-  !else
-    dij=dsqrt(dble(                      &
-              (ns1(i)-ns1(j))**2 +  &
-              (ns2(i)-ns2(j))**2 +  &
-              (ns3(i)-ns3(j))**2    &
-              ))
-   !end if
-    do ii=1,5
-     if ((dij<=(bcc(ii)+delta)).and.(dij>=(bcc(ii)-delta))) then
-        neigh(ii)=neigh(ii)+1
-     end if
-    end do
-   end do !j-nsia
-   write(567,'(i8,5i6)') i,neigh(1:5)
- end do  !i-nsia
-
-   return
-   end
-
-!#####################################################################
-   subroutine write_n123(ntemp,nsize,a0,n1,n2,n3,rx,ry,rz,  &
-                         n1MAX,n2MAX,n3MAX)
-   use math
-   use the_111_smooth, ONLY : pbc_111
-   use the_100_smooth, ONLY : pbc_100
-   implicit none
-
-   integer :: nsize, i,n1MAX,n2MAX,n3MAX,ntemp
-   integer  :: n1(nsize),n2(nsize),n3(nsize)
-   real(8)     :: rx(nsize),ry(nsize),rz(nsize)
-   integer :: itemp,ngcd,n1pbc,n2pbc,n3pbc
-
-   double precision     :: a0,a02
-
-   a02= a0/2.d0
-
-     do i=1,ntemp
-          n1(i)=nint(rx(i)/a02)
-          n2(i)=nint(ry(i)/a02)
-          n3(i)=nint(rz(i)/a02)
-     end do
-    n1MAX = maxval(n1)
-    n2MAX=  maxval(n2)
-    n3MAX=  maxval(n3)
-
-    n1pbc=n1MAX+1
-    n2pbc=n2MAX+1
-    n3pbc=n3MAX+1
-
-    print*, 'n1MAX,n2MAX,n3MAX',n1MAX,n2MAX,n3MAX
-
-    call gcd (n1pbc,n2pbc,itemp)
-    call gcd (itemp,n3pbc,ngcd)
-    pbc_111=n1pbc*(n2pbc/ngcd)*(n3pbc/ngcd)
-    pbc_100= n3pbc
-     write(*,*) 'We will have periodicity in <111> direction in', pbc_111
-     write(*,*) 'We will have periodicity in <100> direction in', pbc_100
-
-   return
-   end
-!#####################################################################
-
-
+!=======================================================================
+! point_defects.f90
+!
+! Point defects: dumbbells, Gao di-interstitials and vacancies. Geometry of
+! the inserted atoms and writing of the output files.
+!
+!   read_sia      vectors of the two dumbbell atoms; template of gao_unit.in
+!   write_out     output for dumbbells (types 1, 2, 21, 210, 3, 31)
+!   write_out_m   output for Gao di-interstitials (type 4)
+!   write_out_vv  output for vacancies (type 5)
+!=======================================================================
 
    subroutine read_sia(tsia,as110,as111,as100,rsx,rsy,rsz,rgx,rgy,rgz)
    use icosaedre, only: rdumb
+   use defect_types
    implicit none
    double precision     :: rsx(2),rsy(2),rsz(2),as110,as111,as100
    double precision     :: rgx(6), rgy(6), rgz(6)
@@ -270,7 +22,7 @@ end if
    cos45 = sqrt(2.d0)/2.d0
    cos01 = sqrt(2.d0)/sqrt(3.d0)
 
-   if (tsia==1) then
+   if (tsia==DEFECT_SIA_110) then
       as2 = as110/2.d0
       rsx(1)= - cos45 * as2
     rsy(1)= - cos45 * as2
@@ -279,7 +31,8 @@ end if
     rsx(2)= cos45 * as2
     rsy(2)= cos45 * as2
     rsz(2)= 0.d0
-   else if ((tsia==2).or.(tsia==22).or.(tsia==21).or.(tsia==221)) then
+   else if ((tsia==DEFECT_SIA_111).or.(tsia==DEFECT_SIA_111_CARE).or. &
+            (tsia==DEFECT_SIA_111_MIGRATION).or.(tsia==DEFECT_SIA_111_MIGRATION_CARE)) then
       as2 = as111/2.d0
     rsx(1)= - cos01 * cos45 *  as2
     rsy(1)= - cos01 * cos45 *  as2
@@ -288,7 +41,7 @@ end if
     rsx(2)= cos01 * cos45 *  as2
     rsy(2)= cos01 * cos45 *  as2
     rsz(2)= cos01 * cos45 *  as2
-  else if (tsia==210) then
+  else if (tsia==DEFECT_FRANK_LOOP) then
 
       as2 = as111/2.d0
     rsx(1)= - cos01 * cos45 *  as2 !+ 2.8553/3.0
@@ -299,7 +52,7 @@ end if
     rsy(2)= cos01 * cos45 *  as2  -2.8553/6.0
     rsz(2)= cos01 * cos45 *  as2  -2.8553/6.0
 
-  else if ((tsia==3).or.(tsia==31).or.(tsia==310)) then
+  else if ((tsia==DEFECT_SIA_100).or.(tsia==DEFECT_SIA_100_CARE)) then
 
       rsx(1)= 0.d0
       rsy(1)= 0.d0
@@ -309,7 +62,7 @@ end if
       rsy(2)= 0.d0
       rsz(2)= as100/2.d0
 
-  else if (tsia==77) then
+  else if (tsia==DEFECT_ICO_DUMBBELLS) then
       !rdumb(i,jk,)
       ! i - 1st atom of the dumbell
       ! j - x,y,z of the dumbell
@@ -341,7 +94,7 @@ end if
       rdumb(2,3,1)= 0.d0
 
 
-    else if (tsia==4) then
+    else if (tsia==DEFECT_GAO) then
 
     open (23,file='gao_unit.in',form='formatted' )
 
@@ -349,7 +102,7 @@ end if
      read(23,*) rgx(i),rgy(i),rgz(i)
     end do
     close(23)
-    else if ((tsia==7).or.(tsia==6).or.(tsia==67)) then
+    else if ((tsia==DEFECT_ICO).or.(tsia==DEFECT_C15).or.(tsia==DEFECT_C15_TWISTED)) then
     write(*,*) 'Bye bye Platon...'
     write(*,*) 'Welcome in the Archimedian solids'
 
@@ -362,12 +115,15 @@ end if
 
    return
    end
-!#####################################################################
+
+!=======================================================================
+
    subroutine write_out (nall,ntemp,nsia,volc,nsite,rxb,ryb,rzb,rx,  &
                   ry,rz,rsx,rsy,rsz,a,a0)
   use math
   use pbc
   use the_111_smooth
+  use lammps_output
   implicit none
   integer  :: nall,ntemp,nsia,n,i,icard,is
   double precision,dimension(nall)     :: rx,ry,rz
@@ -396,6 +152,8 @@ end if
   open(23,file='uvbcsia_sim.xyz')
   open(24,file='uvbcsia_cube.xyz')
   open(26,file='juvsia.xyz')
+  call lammps_begin ('formd_new.lmp', nall, a*volc, &
+       'Insert_Sias: crystal with defects (formd_new.str), lengths in Angstrom')
 
     CELLDM=1.0
   in=1
@@ -480,6 +238,7 @@ end if
         write(26,'("Fe  ",3f18.13)') x,y,z
         write(13,10) icnt,x,y,z,in,in,in
         write(15,'(a3,3(f18.13))') 'Fe ', x,y,z
+        call lammps_atom (x, y, z)
         write(17,'(a3,3(f18.13))') '   ', x,y,z
        if (x .ge. xmax) xmax=x
        if (y .ge. ymax) ymax=y
@@ -505,9 +264,6 @@ end if
   adiff=ycube
   if (xcube >= ycube) adiff=xcube
   if (zcube >= adiff)   adiff=zcube
-  write(*,*) xmin, xmax
-  write(*,*) xcenter,ycenter,zcenter
-  write(*,*) adiff
 
 
 ! Write only a slice:
@@ -695,6 +451,7 @@ end if
    write(12,'("Cu  ",3f12.5)') rx(i)*volc,ry(i)*volc,rz(i)*volc
    write(13,10) icnt,rx(i)*volc,ry(i)*volc,rz(i)*volc,in,in,in
    write(15,'(a3,3(f18.13))') 'Fe ', rx(i)*volc,ry(i)*volc,rz(i)*volc
+   call lammps_atom (rx(i)*volc, ry(i)*volc, rz(i)*volc)
    write(17,'(a3,3(f18.13))') '   ', rx(i)*volc,ry(i)*volc,rz(i)*volc
    write(18,'(a3,3(f18.13),"   1")') '   ', xc(1:3)
   end if
@@ -727,6 +484,8 @@ end if
 
 
 
+  call lammps_end ()
+
   close(11)
   close(12)
   close(13)
@@ -741,14 +500,14 @@ end if
 
   return
   end
-!#####################################################################
 
-!#####################################################################
+!=======================================================================
 
    subroutine write_out_m (nall,ntemp,nsia,volc,a0,nsite_m,rx,  &
                    ry,rz,rsx,rsy,rsz,a)
    use math
   use pbc
+   use lammps_output
    integer  :: nall,ntemp,nsia,n,i,icard,in,icnt,is,ii
    double precision     :: rx(nall),ry(nall),rz(nall),a0,a02,CELLDM
    integer  :: nsite_m(4,nsia)
@@ -766,6 +525,8 @@ end if
    open(19,file='usia.xyz')
    open(21,file='formd_new_ndm_org.str',form='formatted',status='unknown')
    open(22,file='geom_org.data',form='formatted',status='unknown')
+   call lammps_begin ('formd_new.lmp', nall, a*volc, &
+        'Insert_Sias: crystal with defects (formd_new.str), lengths in Angstrom')
 
      CELLDM=1.0
    in=1
@@ -835,6 +596,7 @@ end if
    write(16,'("Fe  ",3f18.13)') x,y,z
    write(13,10) icnt,x,y,z,in,in,in
    write(15,'(a3,3(f18.13))') 'Fe ', x,y,z
+   call lammps_atom (x, y, z)
    write(17,'(a3,3(f18.13))') '   ', x,y,z
     xp(1:3)=(/  x, y, z/)
     xc(1:3) = MatMul(inv_at(1:3,1:3)/volc, xp(1:3))
@@ -863,6 +625,7 @@ end if
    write(12,'("Cu  ",3f12.5)') rx(i)*volc,ry(i)*volc,rz(i)*volc
    write(13,10) icnt,rx(i)*volc,ry(i)*volc,rz(i)*volc,in,in,in
    write(15,'(a3,3(f18.13))') 'Fe ', rx(i)*volc,ry(i)*volc,rz(i)*volc
+   call lammps_atom (rx(i)*volc, ry(i)*volc, rz(i)*volc)
    write(17,'(a3,3(f18.13))') '   ', rx(i)*volc,ry(i)*volc,rz(i)*volc
    write(18,'(a3,3(f18.13),"   1")') '   ', xc(1:3)
    end if
@@ -890,6 +653,8 @@ end if
 
 
 
+   call lammps_end ()
+
    close(12)
    close(11)
    close(13)
@@ -901,12 +666,14 @@ end if
 
    return
    end
-!#####################################################################
+
+!=======================================================================
 
    subroutine write_out_vv (nall,ntemp,nsia,nsize,volc,nsite,rx,  &
                    ry,rz,a)
    use math
    use pbc
+   use lammps_output
    integer  :: nall,ntemp,nsia,i,icard,nsize,in,icnt,is
    double precision     :: rx(nsize),ry(nsize),rz(nsize),CELLDM
    integer  :: nsite(nsia)
@@ -930,6 +697,8 @@ end if
 
 
   open (15,file='formd_new.str',form='formatted',status='unknown')
+  call lammps_begin ('formd_new.lmp', nall, a*volc, &
+       'Insert_Sias: crystal with defects (formd_new.str), lengths in Angstrom')
 
   write(15,'(i8)') nall
     write(15,'(3f18.13)')a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
@@ -1010,6 +779,7 @@ end if
    write(12,'("Cu  ",3f12.5)') rx(i)*volc,ry(i)*volc,rz(i)*volc
    write(13,10) icnt,rx(i)*volc,ry(i)*volc,rz(i)*volc,in,in,in
    write(15,'(a3,3(f18.13))') 'Fe ', rx(i)*volc,ry(i)*volc,rz(i)*volc
+   call lammps_atom (rx(i)*volc, ry(i)*volc, rz(i)*volc)
    write(17,'(a3,3(f18.13))') '   ', rx(i)*volc,ry(i)*volc,rz(i)*volc
    write(18,'(a3,3(f18.13),"   1")') '   ', xc(1:3)
    end if
@@ -1037,6 +807,8 @@ end if
 
 
 
+   call lammps_end ()
+
    close(12)
    close(11)
    close(13)
@@ -1048,287 +820,5 @@ end if
 
    return
    end
-!#####################################################################
 
-
-
-!#####################################################################
-   subroutine write_out_migration (nall,ntemp,volc,rx,  &
-                  ry,rz,rsx,rsy,rsz,a)
-  use math
-  use pbc
-  use migration_sia
-  use the_111_smooth
-
-  implicit none
-  integer  :: nall,ntemp,i,j,ii,icard,is
-  double precision,dimension(nall)     :: rx,ry,rz
-  integer  :: in ,icnt
-  double precision     :: rsx(2),rsy(2),rsz(2),x,y,z, volc,CELLDM
-  double precision,dimension(3,3), intent(in) :: a
-  real(kind(1.d0)), dimension(3) :: xp,xc
-
-
-  open (25,file='deb_loop.gin_0',form='formatted',status='unknown')
-  open (26,file='fin_loop.gin_0',form='formatted',status='unknown')
-
-
-    CELLDM=1.0
-  in=1
-
-
-
-
-   write(25,'("1   1   1")')
-   write(25,'(3f18.13)')a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
-   write(25,'(3f18.13)')a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
-   write(25,'(3f18.13)')a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
-   write(25,'(i8)') nall
-
-   write(26,'("1   1   1")')
-   write(26,'(3f18.13)')a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
-   write(26,'(3f18.13)')a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
-   write(26,'(3f18.13)')a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
-   write(26,'(i8)') nall
-
-
-
-
-
-  do i=1,nfix
-    ii=nsite_fixed(i)
-   do is=1,2
-    x = rx(ii)+rsx(is)
-    y = ry(ii)+rsy(is)
-    z = rz(ii)+rsz(is)
-
-    xp(1:3)=(/x,y,z /)
-    xc = MatMul(inv_at(:,:)/volc, xp)*volc
-    write(25,'(a3,3(f18.13),"   1")') '   ', xc(1:3)
-    write(26,'(a3,3(f18.13),"   1")') '   ', xc(1:3)
-   end do
-
-  end do
-
-  do i=1,ntemp
-   icard=0
-    do is=1,2*nmig
-     if (i==nsite_removed(is)) then
-      icard=1
-     endif
-    end do
-    do is=1,nfix
-     if (i==nsite_fixed(is)) then
-      icard=1
-     endif
-    end do
-
-  if (icard==0) then
-    xp(1:3)=(/ rx(i),ry(i),rz(i) /)*volc
-    xc(1:3)=MatMul(inv_at(:,:)/volc,xp(:))
-    write(25,'(a3,3(f18.13),"   1")') '   ' ,xc(1:3)
-    write(26,'(a3,3(f18.13),"   1")') '   ', xc(1:3)
-   end if
-
- end do
-
-
- icnt=0
-! writing sias ....
-  do i=1,nmig
-   do j=1,3
-    xp(1:3)=debatoms(i)%atom(1:3,j)*volc
-    xc = MatMul(inv_at(:,:)/volc, xp)*volc
-    write(25,'(a3,3(f18.13),"   1")') '   ', xc(1:3)
-   end do
-   do j=1,3
-    xp(1:3)=finatoms(i)%atom(1:3,j)
-    xc = MatMul(inv_at(:,:)/volc, xp)
-    write(26,'(a3,3(f18.13),"   1")') '   ', xc(1:3)
-   end do
-  end do
-
-
-  close(25)
-  close(26)
-
-
-
-  return
-  end
-!#####################################################################
-
-!#####################################################################
-   subroutine deb_write_out_migration (nall,ntemp,volc,rx,  &
-                  ry,rz,rsx,rsy,rsz,a)
-  use math
-  use pbc
-  use migration_sia
-  use the_111_smooth
-
-  implicit none
-  integer  :: nall,ntemp,i,j,ii,icard,is
-  double precision,dimension(nall)     :: rx,ry,rz
-  integer  :: in ,icnt
-  double precision     :: rsx(2),rsy(2),rsz(2),x,y,z, volc,CELLDM
-  double precision,dimension(3,3), intent(in) :: a
-  real(kind(1.d0)), dimension(3) :: xp,xc
-
-
-  open (25,file='deb_loop.gin_0',form='formatted',status='unknown')
-
-
-    CELLDM=1.0
-  in=1
-
-
-
-
-   write(25,'("1   1   1")')
-   write(25,'(3f18.13)')a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
-   write(25,'(3f18.13)')a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
-   write(25,'(3f18.13)')a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
-   write(25,'(i8)') nall
-
-  do i=1,nfix
-    ii=nsite_fixed(i)
-   do is=1,2
-    x = rx(ii)+rsx(is)
-    y = ry(ii)+rsy(is)
-    z = rz(ii)+rsz(is)
-
-    xp(1:3)=(/x,y,z /)
-    xc = MatMul(inv_at(:,:)/volc, xp)*volc
-    write(25,'(a3,3(f18.13),"   1")') '   ', xc(1:3)
-   end do
-  end do
-
-
-  do i=1,ntemp
-   icard=0
-    do is=1,2*nmig
-     if (i==nsite_removed(is)) then
-      icard=1
-     endif
-    end do
-    do is=1,nfix
-     if (i==nsite_fixed(is)) then
-      icard=1
-     endif
-    end do
-
-  if (icard==0) then
-    xp(1:3)=(/ rx(i),ry(i),rz(i) /)*volc
-    xc(1:3)=MatMul(inv_at(:,:)/volc,xp(:))
-    write(25,'(a3,3(f18.13),"   1")') '   ' ,xc(1:3)
-    if (i==7) write(*,*) "i",  xc(1:3)
-   end if
-
- end do
-
-
- icnt=0
-! writing sias ....
-  do i=1,nmig
-   do j=1,3
-    xp(1:3)=debatoms(i)%atom(1:3,j)*volc
-    xc = MatMul(inv_at(:,:)/volc, xp)*volc
-    write(25,'(a3,3(f18.13),"   1")') '   ', xc(1:3)
-   end do
-  end do
-
-
-  close(25)
-
-
-
-  return
-  end subroutine deb_write_out_migration
-!#####################################################################
-!#####################################################################
-   subroutine fin_write_out_migration (nall,ntemp,volc,rx,  &
-                  ry,rz,rsx,rsy,rsz,a)
-  use math
-  use pbc
-  use migration_sia
-  use the_111_smooth
-
-  implicit none
-  integer  :: nall,ntemp,i,j,ii,icard,is
-  double precision,dimension(nall)     :: rx,ry,rz
-  integer  :: in ,icnt
-  double precision     :: rsx(2),rsy(2),rsz(2),x,y,z, volc,CELLDM
-  double precision,dimension(3,3), intent(in) :: a
-  real(kind(1.d0)), dimension(3) :: xp,xc
-
-
-  open (26,file='fin_loop.gin_0',form='formatted',status='unknown')
-
-
-    CELLDM=1.0
-  in=1
-
-
-
-   write(26,'("1   1   1")')
-   write(26,'(3f18.13)')a(1,1)*volc, a(1,2)*volc, a(1,3)*volc
-   write(26,'(3f18.13)')a(2,1)*volc, a(2,2)*volc, a(2,3)*volc
-   write(26,'(3f18.13)')a(3,1)*volc, a(3,2)*volc, a(3,3)*volc
-   write(26,'(i8)') nall
-
-
-
-
-
-  do i=1,nfix
-    ii=nsite_fixed(i)
-   do is=1,2
-    x = rx(ii)+rsx(is)
-    y = ry(ii)+rsy(is)
-    z = rz(ii)+rsz(is)
-
-    xp(1:3)=(/x,y,z /)
-    xc = MatMul(inv_at(:,:)/volc, xp)*volc
-    write(26,'(a3,3(f18.13),"   1")') '   ', xc(1:3)
-   end do
-  end do
-
-  do i=1,ntemp
-   icard=0
-    do is=1,2*nmig
-     if (i==nsite_removed(is)) then
-      icard=1
-     endif
-    end do
-    do is=1,nfix
-     if (i==nsite_fixed(is)) then
-      icard=1
-     endif
-    end do
-
-  if (icard==0) then
-
-    xp(1:3)=(/ rx(i),ry(i),rz(i) /)*volc
-    xc(1:3)=MatMul(inv_at(:,:)/volc,xp(:))
-    write(26,'(a3,3(f18.13),"   1")') '   ', xc(1:3)
-    if (i==7) write(*,*) "f",  xc(1:3)
-   end if
- end do
-
-
- icnt=0
-! writing sias ....
-  do i=1,nmig
-   do j=1,3
-    xp(1:3)=finatoms(i)%atom(1:3,j)
-    xc = MatMul(inv_at(:,:)/volc, xp)
-    write(26,'(a3,3(f18.13),"   1")') '   ', xc(1:3)
-   end do
-  end do
-
-
-  close(26)
-
-  return
-  end subroutine fin_write_out_migration
-!#####################################################################
+!=======================================================================

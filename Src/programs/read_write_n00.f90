@@ -1,3 +1,9 @@
+!=======================================================================
+! read_write_n00.f90   (read_write_n00.x)
+!
+! Translates the list of sites of no00.inp by an integer vector and writes
+! it to no00_new.inp.
+!=======================================================================
     integer ::      nat,ixstep,iystep,izstep
     integer ::   n1,n2,n3,i
     integer, allocatable, dimension(:) :: n1s, n2s,n3s

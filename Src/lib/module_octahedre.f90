@@ -1,3 +1,13 @@
+!=======================================================================
+! module_octahedre.f90
+!
+! Geometry of the two cluster units, in units of a0/2 around the centre.
+! 
+!   module octahedre   the C15 unit: lattice atoms removed, atoms
+!                      inserted, directions that link two units
+!   module icosaedre   the icosahedral unit, and the data of the extra
+!                      dumbbells and atoms of type 77
+!=======================================================================
 module octahedre
 
    implicit none
@@ -180,7 +190,6 @@ contains
       vec_temp_in(1:3)=icos(1)%removeatom(1:3,i)
       !debug write(*,*) 'octo',vec_temp_in
        call rotation_vector_t(60*deg2rad,t_dir, vec_temp_in,vec_temp_out)
-       write(*,*) 'icos',vec_temp_in, 't', vec_temp_out
       icos(2)%removeatom(1:3,i)=vec_temp_out(1:3)
    end do
 
