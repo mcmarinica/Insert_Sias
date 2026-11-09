@@ -179,10 +179,11 @@ order:
 2
 ```
 
-This is the four-interstitial cluster. The repository ships a library of such
-files, named by their number of interstitials, in `Examples/C15_inputs/`
-([examples.md](examples.md#the-c15-library)). The library uses type 1 on odd
-centres and type 2 on even ones.
+This is the four-interstitial cluster. The `no00.inp` of the example
+directories `004a_SIA_C15`, `011a_SIA_C15`, `017a_SIA_C15` and `101_SIA_c15`
+are such files for 4, 11, 17 and 101 interstitials
+([examples.md](examples.md#examples004a_sia_c15-011a_sia_c15-017a_sia_c15-101_sia_c15)).
+They use type 1 on odd centres and type 2 on even ones.
 
 There is a third unit type, `4`: a partial unit that removes two sites and
 inserts four atoms. The source describes it as the building block for clusters
@@ -211,6 +212,10 @@ for the cluster. Read the routine `write_out_kazuto` of that file before using
 it.
 
 ## Icosahedral clusters in fcc: types 7 and 77
+
+These types build the A15 clusters of A. M. Goryaeva *et al.*, Nat. Commun.
+**14**, 3003 (2023): compact three-dimensional interstitial clusters with the
+structure of the A15 Frank-Kasper phase.
 
 ### The unit
 

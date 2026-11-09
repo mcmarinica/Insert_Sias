@@ -63,15 +63,17 @@ printf '2\n4 4 4\n5 5 5\n'  > no00.inp
 echo 5 | ../../Src/bin/put_vct.x
 ```
 
-432 atoms become 430.
+432 atoms become 430. `Examples/Vacancies` holds 26 such lists, from the single
+vacancy to clusters of ten, and a script that builds them all.
 
-### A C15 cluster from the library
+### A C15 cluster
 
-The 11-interstitial C15 cluster in a 20 x 20 x 20 bcc cell.
+The 11-interstitial C15 cluster in a 20 x 20 x 20 bcc cell, with the list of
+units of `Examples/011a_SIA_C15`.
 
 ```sh
 printf '2\n2.8553\n20 20 20\n' | ../../Src/bin/cube.x
-cp ../../Examples/C15_inputs/MagicNumbers/0011_c15a.inp no00.inp
+cp ../../Examples/011a_SIA_C15/no00.inp .
 echo 6 | ../../Src/bin/put_vct.x
 ```
 
@@ -116,18 +118,24 @@ The states are in `deb_loop.gin_0` and `fin_loop.gin_0`, and for LAMMPS in
 
 ## The example directories
 
-### Examples/001_SIA_110
+### Examples/001_SIA_110, 001_SIA_111, 001_SIA_100_fcc
 
-The introductory example: one dumbbell in a bcc cell, driven by a script.
+The introductory examples: one dumbbell in a cell, driven by a script.
+
+| Directory | Crystal | Defect type | Atoms |
+|---|---|---|---|
+| `001_SIA_110` | 8 x 8 x 8 bcc | `1`, `<110>` dumbbell | 1024 become 1025 |
+| `001_SIA_111` | 8 x 8 x 8 bcc | `2`, `<111>` dumbbell | 1024 become 1025 |
+| `001_SIA_100_fcc` | 10 x 10 x 10 fcc | `3`, `<100>` dumbbell | 4000 become 4001 |
 
 | File | Role |
 |---|---|
 | `insert.sh` | Writes `cube.inp`, `no00.inp` and `put.inp`, then runs `cube.x` and `put_vct.x` |
 | `clean.sh` | Removes the files produced by a run |
-| `README` | Two-line instructions |
-| other files | The result converted to other formats (POSCAR, xyz, LAMMPS, CFG, gin) with external tools, kept as illustrations |
+| `README` | Short instructions |
+| other files of `001_SIA_110` | The result converted to other formats (POSCAR, xyz, LAMMPS, CFG, gin) with external tools, kept as illustrations |
 
-Run it with `sh insert.sh`. The script contains three small blocks to edit:
+Run one with `sh insert.sh`. The script contains three small blocks to edit:
 the cell (lattice type, lattice parameter, number of cells), the list of sites,
 and the defect type. Keep the lattice parameter at 2.8553.
 
@@ -149,30 +157,33 @@ current sources regenerate the stored `formd_new.str` exactly, which makes
 these directories a convenient check of a new build. The run adds the LAMMPS
 files `formd.lmp` and `formd_new.lmp`, which the stored results predate.
 
-### The C15 library
+The `no00.inp` of these directories are the ready-made C15 unit lists of the
+repository. Their centres lie between 3 and 17; for a larger cell, shift them
+with `read_write_n00.x`.
 
-Ready-made unit lists for C15 clusters, to be copied to `no00.inp` and used
-with type `6`.
+### Examples/Vacancies
 
-| Location | Files |
+Vacancies and vacancy clusters in bcc: the single vacancy, the di-vacancies on
+first to fifth neighbours and clusters of 3 to 10 vacancies, 26 configurations
+in all. They are the clusters of Figure 2 of A. M. Goryaeva *et al.*,
+Phys. Rev. Materials **5**, 103803 (2021), which compares their formation and
+binding energies in tungsten for several machine-learning potentials and DFT.
+The `README` of the directory gives the steps to reproduce that figure.
+
+| File | Role |
 |---|---|
-| `Examples/C15_inputs/` | `0004_c15a.inp` and `0101_c15a.inp`, the clusters of 4 and 101 interstitials |
-| `Examples/C15_inputs/MagicNumbers/` | Clusters of 11, 17, 23, 29, 35, 37 and 47 interstitials |
-| `Examples/C15_inputs/Draft/` | About forty clusters of 30 to 90 interstitials, several variants per size |
+| `INPS_VAC/no00.inp_NNvM` | The vacant sites of configuration NNvM: NN vacancies, configuration number M |
+| `make_vacancies.sh` | Builds the reference crystal and every configuration, or the ones named |
+| `clean.sh` | Removes the result directories |
+| `data_vac.dat` | Number of orientations and mean squared distance between vacancies of each cluster |
+| `README` | Instructions and the description of `data_vac.dat` |
 
-The file names read `NNNN_c15x.inp`: NNNN is the number of interstitials and
-the letter distinguishes different shapes of the same size.
+```sh
+sh make_vacancies.sh                # all configurations, 6 x 6 x 6 cubic cells
+sh make_vacancies.sh 8 02v1 03v4    # two configurations, 8 x 8 x 8 cubic cells
+```
 
-The centres in these files lie between 5 and 23, which places the clusters
-near the middle of a 20 x 20 x 20 bcc cell. For a larger cell, shift them with
-`read_write_n00.x`.
-
-### Examples/fcc_big_loops
-
-A loop in fcc. The directory holds a 12 x 12 x 12 fcc reference crystal
-(`formd.str`, 6912 atoms, built with a0 = 2.8553 Å), a list of 19 sites in a
-(111) plane (`no00.inp`), and a `README` with the three steps: `cube.x`,
-`pre_put_vct.x`, then `put_vct.x` after copying `no00_new.inp` to `no00.inp`.
-
-Running `put_vct.x` there with type `1`, `2` or `210` gives a 19-interstitial
-loop, 6931 atoms.
+The results go to a directory named after the cell, for instance `06x06x06/`:
+`bulk.lmp` and `bulk.gin` for the perfect crystal, `NNvM.lmp` and `NNvM.gin`
+for each configuration. The script checks that every run removed the expected
+number of atoms.

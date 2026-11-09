@@ -1,4 +1,11 @@
-This is an examples how to insert one  110 SIA  into one bcc structure. 
+One <110> dumbbell in a bcc crystal: the introductory example.
 
-1. Edit the no00.inp to handle the position on 110 SIAs
-2. Run the script insert.sh (and read the content if you want to change more things). 
+  sh insert.sh     builds an 8 x 8 x 8 bcc cell (1024 atoms) and inserts the
+                   dumbbell at site (1,1,1): 1025 atoms in formd_new.str
+  sh clean.sh      removes the files produced by the run
+
+To change the cell, the sites or the defect type, edit the three short blocks
+of insert.sh. Keep the lattice parameter at 2.8553.
+
+The other files are the result converted to other formats (POSCAR, xyz,
+LAMMPS, CFG, gin), kept as illustrations.

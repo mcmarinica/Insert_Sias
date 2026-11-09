@@ -91,7 +91,7 @@ A loop or a cluster is simply a list of many entries of the same type.
 | `Src/programs/` | One source file per executable |
 | `Src/lib/` | The routines of `put_vct.x`, one file per task |
 | `Src/bin/` | The executables, once built |
-| `Examples/` | Worked examples and a library of C15 cluster inputs |
+| `Examples/` | Worked examples: single dumbbells, C15 clusters, vacancy clusters |
 | `doc/` | This documentation |
 
 ## Background reading

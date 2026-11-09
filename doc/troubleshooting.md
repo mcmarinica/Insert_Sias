@@ -63,9 +63,10 @@ through the cell boundaries. Dumbbells and vacancies can sit anywhere, and the
 row relaxation of types `21`, `31` and `221` does follow the periodic images.
 
 **Dumbbell lengths are those of bcc.** In fcc the compiled 2.05 Å of the
-`<110>` dumbbell is longer than the first-neighbour distance, and neighbouring
-dumbbells of a loop come within 1 Å of each other. Compile the fcc values for
-fcc loops ([install.md](install.md#compiled-parameters)).
+`<110>` dumbbell is longer than the first-neighbour distance, and each of its
+atoms ends up 0.99 Å from the next atom of the crystal along [110]. With the
+fcc values this distance is 1.24 Å. Compile the fcc values for fcc loops
+([install.md](install.md#compiled-parameters)).
 
 **Type 31 does not run with the default parameters.** It needs a `<100>`
 dumbbell length above 1.90 Å, and the compiled value is 1.70 Å.

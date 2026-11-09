@@ -120,7 +120,8 @@ the file and recompile.
 The dumbbell lengths in `put_vct.f90` suit bcc. The line just below them in the
 source, commented out and marked `!fcc`, holds the fcc values (1.55 Å for all
 three). Swap the two lines before building loops in fcc: with the bcc values,
-neighbouring `<110>` dumbbells of an fcc loop end up less than 1 Å apart.
+each atom of a `<110>` dumbbell ends up 0.99 Å from the next atom of the
+crystal along [110], against 1.24 Å with the fcc values.
 
 Changing `a0` is rarely needed. The usual route is to keep 2.8553 Å and rescale
 the result, as described in [concepts.md](concepts.md#the-compiled-lattice-parameter).

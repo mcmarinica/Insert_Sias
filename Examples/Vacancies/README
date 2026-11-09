@@ -1,0 +1,96 @@
+Vacancies and vacancy clusters in bcc
+=====================================
+
+This example builds the starting configurations of a single vacancy and of
+clusters of 2 to 10 vacancies in a bcc crystal.
+
+
+Where it was used
+-----------------
+
+These are the vacancy clusters V_n, n = 1 to 10, of Figure 2 of
+
+    A. M. Goryaeva, J. Dérès, C. Lapointe, P. Grigorev, T. D. Swinburne,
+    J. R. Kermode, L. Ventelon, J. Baima and M.-C. Marinica,
+    "Efficient and transferable machine learning potentials for the
+    simulation of crystal defects in bcc Fe and W",
+    Phys. Rev. Materials 5, 103803 (2021).
+    https://doi.org/10.1103/PhysRevMaterials.5.103803
+
+For bcc tungsten, that figure compares the formation energies of the clusters
+given by machine-learning potentials (LML, QNML, GAP14, GAP19) with the DFT
+values (panel a), and shows their binding energies as a function of the
+cluster size (panel b). The clusters are similar to the configurations of
+
+    D. R. Mason, D. Nguyen-Manh and C. S. Becquart,
+    J. Phys.: Condens. Matter 29, 505501 (2017).
+
+To reproduce the figure with a given potential:
+
+    1. build the configurations with make_vacancies.sh (next section);
+    2. bring bulk.lmp and every NNvM.lmp to the lattice parameter of
+       tungsten for that potential (doc/concepts.md);
+    3. relax each of them and take its energy;
+    4. the formation energy of a cluster of n vacancies, in a cell of N
+       sites, is  E(NNvM) - (N-n)/N x E(bulk);
+    5. the binding energy compares it with n times the formation energy of
+       the single vacancy, 01v1. It is positive for a bound cluster and
+       negative for one that tends to dissociate.
+
+
+How to run it
+-------------
+
+    sh make_vacancies.sh                 all configurations, 6x6x6 cubic cells
+    sh make_vacancies.sh 8               all configurations, 8x8x8 cubic cells
+    sh make_vacancies.sh 8 02v1 03v4     only the configurations named
+
+The programs must be built first (doc/install.md). The results go to a
+directory named after the cell, for instance 06x06x06:
+
+    bulk.lmp  bulk.gin     the perfect crystal
+    NNvM.lmp  NNvM.gin     the crystal with the vacancies of configuration NNvM
+
+.lmp is a LAMMPS data file and .gin holds reduced coordinates (doc/files.md).
+The crystal has the lattice parameter of the programs, 2.8553 A. To bring it
+to the lattice parameter of your metal, see doc/concepts.md.
+
+clean.sh removes the result directories.
+
+
+The configurations
+------------------
+
+INPS_VAC/no00.inp_NNvM lists the vacant sites of configuration NNvM. NN is the
+number of vacancies and M numbers the configurations of that size. The first
+line of a file is the number of sites; the following lines are their
+coordinates, in units of half the lattice parameter.
+
+    01v1             the single vacancy
+    02v1 ... 02v5    di-vacancies on first to fifth neighbours
+    03v1 ... 10v2    clusters of 3 to 10 vacancies
+
+All sites lie between 1 and 6, so the smallest cell is 4x4x4.
+
+To add a configuration, add a file with the same layout to INPS_VAC.
+
+
+data_vac.dat
+------------
+
+One line per configuration of two vacancies or more:
+
+    column 1         name of the configuration, without the leading zero
+    column 2         number of orientations of the cluster in the crystal
+    column 3         mean squared distance between its vacancies, in units
+                     of the squared first-neighbour distance
+    columns 4 to 6   values of the study the configurations come from; the
+                     programs do not use them
+
+Columns 2 and 3 can be recomputed from the site lists. They agree for every
+configuration except three, whose site lists give other values:
+
+                  site list          data_vac.dat
+    4v4           48   1.778         24   2.000
+    10v1          24   1.956         48   2.037
+    10v2          48   2.222         48   2.096

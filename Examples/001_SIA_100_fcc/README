@@ -1,0 +1,14 @@
+One <100> dumbbell in an fcc crystal.
+
+  sh insert.sh     builds a 10 x 10 x 10 fcc cell (4000 atoms) and inserts the
+                   dumbbell at site (2,2,2): 4001 atoms in formd_new.str
+  sh clean.sh      removes the files produced by the run
+
+The fcc counterpart of 001_SIA_110: cube.x is given option 1 (fcc) and
+put_vct.x the defect type 3. Sites in fcc have an even sum of indices. To
+change the cell, the sites or the defect type, edit the three short blocks of
+insert.sh. Keep the lattice parameter at 2.8553.
+
+The crystal is built with the bcc lattice parameter of the code; rescale the
+result to the lattice parameter of the fcc metal you want, as explained in
+doc/concepts.md.

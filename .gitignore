@@ -10,6 +10,9 @@
 /Src/Modules/*.mod
 /Src/Modules/*__genmod.f90
 
+# results of Examples/Vacancies/make_vacancies.sh (04x04x04/, 06x06x06/, ...)
+/Examples/Vacancies/[0-9][0-9]x[0-9][0-9]x[0-9][0-9]/
+
 # compiler leftovers
 *.o
 *.a

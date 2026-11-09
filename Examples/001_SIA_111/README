@@ -1,0 +1,9 @@
+One <111> dumbbell in a bcc crystal.
+
+  sh insert.sh     builds an 8 x 8 x 8 bcc cell (1024 atoms) and inserts the
+                   dumbbell at site (1,1,1): 1025 atoms in formd_new.str
+  sh clean.sh      removes the files produced by the run
+
+The same as 001_SIA_110 with defect type 2 instead of 1. To change the cell,
+the sites or the defect type, edit the three short blocks of insert.sh. Keep
+the lattice parameter at 2.8553.
