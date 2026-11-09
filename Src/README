@@ -1,24 +1,101 @@
 @copyleft MC Marinica, R Alexander
 
-Makefile_gfortran - Makefile for gfortran. Tested for versions < 4.8.5
-Makefile_ifort    - Makefile for ifort.    Tested for versions < Composer 2016
-
-Compilation with ifort:
-
-cp Makefile_ifort Makefile ; make
-
-The executables are in bin
-cd bin
-ls -l bin
+Sources of Insert_Sias. The full documentation is in ../doc; the build is
+described in ../doc/install.md.
 
 
--rwxr-xr-x 1 marinica users  810344 Sep  6 15:40 cube.x
--rwxr-xr-x 1 marinica users  819496 Sep  6 15:40 cube_shell.x
--rwxr-xr-x 1 marinica users 1149560 Sep  6 15:40 cut_vct.x
--rwxr-xr-x 1 marinica users 1082792 Sep  6 15:40 put.x
--rwxr-xr-x 1 marinica users 1243248 Sep  6 15:40 put_vct.x
--rwxr-xr-x 1 marinica users  830208 Sep  6 15:40 read_write_n00.x
+Compilation
+-----------
+
+With CMake, from the root of the repository (gfortran is taken first, then ifx;
+add -DCMAKE_Fortran_COMPILER=ifx to choose):
+
+cmake -B build ; cmake --build build
+
+Or with the makefiles of this directory:
+
+Makefile_gfortran - Makefile for gfortran
+Makefile_ifx      - Makefile for the Intel compiler (set FC = ifort for the
+                    classic one)
+Makefile.common   - the rules, included by the two files above
+
+cp Makefile_gfortran Makefile ; make
+
+Either way the executables are written to bin:
+
+cube.x            builds the perfect bcc or fcc reference crystal
+put_vct.x         inserts the defects
+pre_put_vct.x     generates the list of sites of a dislocation loop
+read_write_n00.x  translates a list of sites
+cube_shell.x      reference crystal with an inner block listed first
+
+Most work needs only cube.x and put_vct.x, plus pre_put_vct.x for loops.
 
 
-Probably you will use only cube.x and put_vct.x
+Layout
+------
 
+programs/   one source file per executable, named after it
+lib/        the routines of put_vct.x
+bin/        the executables
+Modules/    module files of the makefile build
+obj/        object files of the makefile build (created by make)
+
+
+programs/
+---------
+
+put_vct.f90         the main program of put_vct.x. It reads the input, finds
+                    the atoms of the listed sites and calls the routines of
+                    lib/ that build each type of defect. The lattice
+                    parameter and the dumbbell lengths are set at its top.
+cube.f              cube.x
+cube_shell.f90      cube_shell.x
+pre_put_vct.f90     pre_put_vct.x, self-contained, with its own parameters
+read_write_n00.f90  read_write_n00.x
+
+
+lib/
+----
+
+Reading and sites
+
+input.f90           reads the defect type, formd.str and the list of sites
+sites.f90           integer coordinates of the atoms, in units of a0/2, and
+                    search of the atoms that sit on the listed sites
+
+Defects
+
+point_defects.f90   dumbbells, Gao di-interstitials, vacancies: geometry
+                    and output files
+migration.f90       the two states of a dumbbell jump
+clusters.f90        C15 and icosahedral clusters: atoms removed, atoms
+                    inserted, output files
+kazuto_style.f90    the rotated cut of defect type 67
+
+Output
+
+lammps_output.f90   module lammps_output: LAMMPS data files
+
+Modules of data
+
+module_defect_types.f90   the defect types as named constants
+                          (DEFECT_VACANCY, DEFECT_C15, ...) and the functions
+                          that group them (defect_is_cluster, ...). The
+                          sources test the type with these names, never with
+                          its number.
+module_octahedre.f90      geometry of the C15 unit (module octahedre) and
+                          of the icosahedral unit (module icosaedre)
+module_111_smooth.f90     row relaxation of defect types 21 and 221
+module_100_smooth.f90     row relaxation of defect type 31
+module_migration_sia.f90  data of the dumbbell jumps
+module_pbc.f90            cell matrix and its inverse
+
+Mathematics
+
+math.f90            module math: 3x3 determinant and inverse, vector product
+rotations.f90       rotation of a vector
+indexx.f90          index sort
+lapack.f            LAPACK routines, for the matrix inverse of math.f90
+
+Every file starts with a comment that lists its routines.
